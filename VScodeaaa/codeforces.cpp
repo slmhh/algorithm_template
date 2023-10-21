@@ -12,22 +12,21 @@ int main(){
 	cin >> T;
 	//T = 1;
 	while(T--){
-		ll n,flag = 1;
-		string work;
-		cin >> n >> work;
-		ll c[27] = {0};
+		ll n,l,r,cnt = 0,t;
+		cin >> n >> l  >> r;
+		vector<ll> nums;
 		for(int i = 0;i < n;i++){
-			if(c[work[i] - 'A']){
-				flag = 0;
-				break;
-			}
-			c[work[i] - 'A']++;
-			while(i + 1 < n && work[i] == work[i + 1]){
-				i++;
-			}
+			cin >> t;
+			nums.push_back(t);
 		}
-		if(flag == 0) puts("NO");
-		else puts("YES");
+		sort(all(nums));
+		for(int i = 0;i < n - 1;i++){
+			ll a,b;
+			a = lower_bound(nums.begin() + i + 1,nums.end(),l - nums[i]) - nums.begin();
+			b = upper_bound(nums.begin() + i + 1,nums.end(),r - nums[i])- nums.begin();
+			cnt += b - a;
+		}
+		cout << cnt << "\n";
 	}
 	return 0;
 }

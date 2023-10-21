@@ -15,7 +15,7 @@
         "-Wall",
         "-Wextra",
         "-Werror",
-        "-fexec-charset=GBK",
+        "-fexec-charset=UTF-8",
         "-std=c++17"
       ],
       "command": "C:\\1\\mingw64\\bin\\g++.exe",
