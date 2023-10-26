@@ -1,4 +1,4 @@
-#include<bits/stdc++.h>
+/*#include<bits/stdc++.h>
 #define all(x) (x).begin(),(x).end()
 using namespace std;
 
@@ -20,5 +20,33 @@ int main(){
 		}
 		else cout << s[i * 100000 + j] << "\n";
 	}
-	return 0;
+	return 0;*/
+	#include<iostream>
+using namespace std;
+
+int ans[13],x[13] = {0},y[13] = {0},rb[30] = {0},lb[30] = {0};
+int n,cnt = 0;
+void dfs(int a){
+    if(a >= n){
+        cnt++;
+        if(cnt > 3) return ;
+        for(int i = 0;i < n;i++)
+            cout << ans[i] << " ";
+        cout << "\n";
+        return ;
+    }
+    for(int i = 0;i < n;i++){
+        if(x[a] || y[i]  || rb[a - i + n]  || lb[a + i] ) continue;
+        x[a] = y[i] = rb[a - i + n] = lb[a + i] = 1;
+        ans[a] = i + 1;
+        dfs(a + 1);
+        x[a] = rb[a - i + n] = y[i] = lb[a + i]  = 0;
+    }
+}
+
+int main(){
+    cin >> n;
+    dfs(0);
+    cout << cnt << "\n";
+    return 0;
 }

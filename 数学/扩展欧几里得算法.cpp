@@ -19,6 +19,7 @@ int main() {
    	int a,b,x,y;
    	cin >> a >> b;
    	exgcd(a,b,x,y);
-   	cout << (x % b + b) % b;
+   	//cout << (x % b + b) % b;
+   	cout << "x = " << x << "\ny = " << y << "\n";
     return 0;
 }

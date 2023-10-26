@@ -1,12 +1,35 @@
 #include<bits/stdc++.h>
 using namespace std;
 
+/*
+13
+A 3
+2 3 4
+B 2
+5 6
+C 1
+7
+D 3
+8 9 10
+E 0
+F 0
+G 2
+11 12
+H 0
+I 0
+J 1
+13
+K 0
+L 0
+M 0
+7*/
+
 template<typename T>
 struct Node {
-    T date;
-    int idx;
-    vector<Node<T>*> son;
-    Node<T>* pa;
+    T date;  //数据
+    int idx;  //编号
+    vector<Node<T>*> son; //存储孩子编号
+    Node<T>* pa;  //存储双亲编号
     Node<T>() { pa = NULL; };
 };
 
@@ -16,15 +39,15 @@ public:
     Node<T>* Root;
     Tree() { Root = new Node<T>;};
     Node<T>* findp(int p, Node<T>* t);
-    void Printpa(int p);
-    void build();
-    void Printbro(int p);
-    void Printson(int p);
-    void Printgra(int p);
-    void Printun(int p);
+    void Printpa(int p);  //输出双亲
+    void build();  //建树
+    void Printbro(int p); //输出兄弟
+    void Printson(int p); //输出孩子
+    void Printgra(int p); //输出祖先
+    void Printun(int p);  //输出子孙
 };
 
-
+//找到编号为p的结点
 template<typename T>
 Node<T>* Tree<T>::findp(int p, Node<T>* t) {
     if (t->idx == p) return t;
@@ -41,6 +64,7 @@ Node<T>* Tree<T>::findp(int p, Node<T>* t) {
     return temp;
 }
 
+//建树
 template<typename T>
 void Tree<T>::build() {
     int n, t, m;
@@ -51,10 +75,10 @@ void Tree<T>::build() {
         temp = findp(i, Root);
         cout << "请输入编号为" << i << "的结点的数值:\n";
         cin >> temp->date;
-        cout << "请输入编号为" << i << "的结点的儿子数目:\n";
+        cout << "请输入编号为" << i << "的结点的孩子数目:\n";
         cin >> m;
         if (m != 0) {
-            cout << "请依次输入子结点的编号:\n";
+            cout << "请依次输入孩子结点的编号:\n";
             for (int j = 0; j < m; j++) {
                 cin >> t;
                 Node<T>* tempson = new Node<T>;
@@ -66,7 +90,7 @@ void Tree<T>::build() {
     }
 }
 
-
+//输出双亲
 template<typename T>
 void Tree<T>::Printpa(int p) {
     Node<T>* temp = new Node<T>;
@@ -77,9 +101,10 @@ void Tree<T>::Printpa(int p) {
         return;
     }
     temp = temp->pa;
-    cout << "编号p的双亲结点的编号为：" << temp->idx << " ，数值为：" << temp->date << "\n";
+    cout << "编号p的双亲结点的编号为:" << temp->idx << " ，数值为:" << temp->date << "\n";
 }
 
+//输出兄弟
 template<typename T>
 void Tree<T>::Printbro(int p) {
     Node<T>* temp = new Node<T>;
@@ -96,23 +121,25 @@ void Tree<T>::Printbro(int p) {
     }
     for (int i = 0; i < temp->son.size(); i++) {
         if (temp->son[i]->date != p)
-            cout << "编号p的兄弟结点的编号为：" << temp->son[i]->idx << " ，数值为：" << temp->son[i]->date << "\n";
+            cout << "编号p的兄弟结点的编号为:" << temp->son[i]->idx << " ，数值为:" << temp->son[i]->date << "\n";
     }
 }
 
+//输出孩子
 template<typename T>
 void Tree<T>::Printson(int p) {
     Node<T>* temp = new Node<T>;
     temp = findp(p, Root);
     if (temp == NULL)  return;  //没有p结点
     if (temp->son.size() == 0) { //p为叶结点
-        cout << "编号p没有儿子结点\n";
+        cout << "编号p没有孩子结点\n";
         return;
     }
     for (int i = 0; i < temp->son.size(); i++)
-        cout << "编号p的儿子结点的编号为：" << temp->son[i]->idx << " ，数值为：" << temp->son[i]->date << "\n";
+        cout << "编号p的孩子结点的编号为:" << temp->son[i]->idx << " ，数值为:" << temp->son[i]->date << "\n";
 }
 
+//输出祖先
 template<typename T>
 void Tree<T>::Printgra(int p) {
     Node<T>* temp = new Node<T>;
@@ -125,42 +152,43 @@ void Tree<T>::Printgra(int p) {
     temp = temp->pa;
     while (temp->pa != NULL) {
         temp = temp->pa;
-        cout << "编号p的祖先结点的编号为：" << temp->idx << " ，数值为：" << temp->date << "\n";
+        cout << "编号p的祖先结点的编号为:" << temp->idx << " ，数值为:" << temp->date << "\n";
     }
 }
 
+//输出子孙
 template<typename T>
 void Tree<T>::Printun(int p) {
     Node<T>* temp = new Node<T>;
     Node<T>* s = new Node<T>;
-    stack<Node<T>*> t;
+    queue<Node<T>*> t;
     bool flag = false;
     temp = findp(p, Root);
     if (temp == NULL)  return;  //没有p结点
     if (temp->son.size() == 0) {
-        cout << "编号p没有孙子结点\n";
+        cout << "编号p没有子孙结点\n";
         return;
     }
     for (int i = 0; i < temp->son.size(); i++) {
         t.push(temp->son[i]);
         while (!t.empty()) {
-            s = t.top();
+            s = t.front();
             t.pop();
             for (int j = 0; j < s->son.size(); j++) {
                 if (s->son[j]->son.size() != 0) {
                     flag = true;
                     t.push(s->son[j]);
                 }
-                cout << "编号p的孙子结点的编号为：" << temp->idx << " ，数值为：" << temp->date << "\n";
+                cout << "编号p的子孙结点的编号为:" << temp->idx << " ，数值为:" << temp->date << "\n";
             }
         }
     }
-    if (flag == false) cout << "编号p没有孙子结点\n";
+    if (flag == false) cout << "编号p没有子孙结点\n";
 }
 
 
 int main() {
-    Tree<int> a;
+    Tree<char> a;
     a.Root->idx = 1;
     a.build();
     int p;
