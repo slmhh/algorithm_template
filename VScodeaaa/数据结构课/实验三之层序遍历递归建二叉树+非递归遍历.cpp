@@ -1,9 +1,6 @@
 #include<bits/stdc++.h>
 using namespace std;
 
-//ABCD*EFGH*****L
-//ABCD*EFGH*****LI**J**********OP
-
 template<typename T>
 struct Node{
     T date;
@@ -154,13 +151,14 @@ void Bitree<T>::Draw(){
 
 int main(){
     string str;
+    cout << "请输入带带外部结点的层次遍历序列:\n"; 
     cin >> str;
     Bitree<char> a;
     a.depth = (int)(log(str.size()));
     a.root->date = str[0];
     a.Build(str,a.root,0);
     a.Draw();
-    cout << "前序遍历为:\n";
+    cout << "先序遍历为:\n";
     a.Front(a.root);
     cout << "中序遍历为:\n";
     a.Middle(a.root);

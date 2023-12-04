@@ -1,0 +1,729 @@
+\documentclass[10pt,a4paper]{article}
+%\usepackage{zh_CN-Adobefonts_external}
+\usepackage{xeCJK}
+\usepackage{amsmath, amsthm}
+\usepackage{listings,xcolor}
+\usepackage{geometry} % 设置页边距
+\usepackage{fontspec}
+\usepackage{graphicx}
+\usepackage[colorlinks]{hyperref}
+\usepackage{setspace}
+\usepackage{fancyhdr} % 自定义页眉页脚
+
+
+\setsansfont{Consolas} % 设置英文字体
+\setmonofont[Mapping={}]{Consolas} % 英文引号之类的正常显示，相当于设置英文字体
+
+\linespread{1.2}
+
+\title{Template For XCPC}
+\author{slmhh @ HBUT}
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\pagestyle{fancy}
+
+\lhead{\CJKfamily{kai} Hubei University of Technology} %以下分别为左中右的页眉和页脚
+\chead{}
+
+\rhead{\CJKfamily{kai} 第 \thepage 页}
+\lfoot{} 
+\cfoot{\thepage}
+\rfoot{}
+\renewcommand{\headrulewidth}{0.4pt} 
+\renewcommand{\footrulewidth}{0.4pt}
+%\geometry{left=2.5cm,right=3cm,top=2.5cm,bottom=2.5cm} % 页边距
+\geometry{left=3.18cm,right=3.18cm,top=2.54cm,bottom=2.54cm}
+\setlength{\columnsep}{30pt}
+
+\makeatletter
+
+\makeatother
+
+\lstset{
+    language    = c++,
+    numbers     = left,
+    numberstyle={                               % 设置行号格式
+        \small
+        \color{black}
+        \fontspec{Consolas}
+    },
+	commentstyle = \color[RGB]{0,128,0}\bfseries, %代码注释的颜色
+	keywordstyle={                              % 设置关键字格式
+        \color[RGB]{40,40,255}
+        \fontspec{Consolas Bold}
+        \bfseries
+    },
+	stringstyle={                               % 设置字符串格式
+        \color[RGB]{128,0,0}
+        \fontspec{Consolas}
+        \bfseries
+    },
+	basicstyle={                                % 设置代码格式
+        \fontspec{Consolas}
+        \small\ttfamily
+    },
+	emphstyle=\color[RGB]{112,64,160},          % 设置强调字格式
+    breaklines=true,                            % 设置自动换行
+    tabsize     = 4,
+    frame       = single,%主题
+    columns     = fullflexible,
+    rulesepcolor = \color{red!20!green!20!blue!20}, %设置边框的颜色
+    showstringspaces = false, %不显示代码字符串中间的空格标记
+	escapeinside={\%*}{*)},
+}
+
+
+%插入.cpp代码
+%\subsection{单调栈}
+%\begin{lstlisting}[caption={}]
+%插入代码
+%\end{lstlisting}
+
+\begin{document}
+
+%\title{ICPC Templates For Grooming}
+%\author {slmhh}
+%\maketitle
+%\tableofcontents
+
+%封面
+\thispagestyle{empty}
+\null\vfill
+\begin{center}
+ \Huge \textbf{ACM-XCPC \\slmhh \\代码模版库}
+\vspace{1.0cm}
+\includegraphics[height=15cm]{hbut.pdf}
+\end{center}
+\vfill
+\clearpage
+
+%目录
+\maketitle
+\tableofcontents
+
+
+\newpage
+\section{数据结构}
+\subsection{单调队列}
+\begin{lstlisting}[caption={}]
+#include<iostream>
+#include<stdio.h>
+#include<queue>
+using namespace std;
+
+const int N = 1e6 + 10;
+deque<long long int> Q;//储存的是编号 
+long long int a[N];
+long long int n,k;
+
+//求最大构建递减的单调队列 
+void cmax(){
+	//创建初始的窗口(到k - 1) 
+	for(int i = 0;i < k - 1;i++){
+		//队列不为空，且队尾元素比a[i]小，则弹出队尾元素 
+		while(!Q.empty() && a[i] >= a[Q.back()]) Q.pop_back(); 
+		Q.push_back(i);
+	}
+	
+	for(int i = k - 1;i < n;i++){
+		//队列不为空，且队尾元素比a[i]小，则弹出队尾元素 
+		while(!Q.empty() && a[i] >= a[Q.back()]) Q.pop_back();
+		Q.push_back(i);
+		//窗口滑过了队头元素，则弹出队尾元素 
+		while(!Q.empty() && Q.front() <= i - k) Q.pop_front();
+		printf("%lld ",a[Q.front()]);
+	}
+	printf("\n");
+}
+
+//求最小构建递增的单调队列
+void cmin(){
+	//创建初始的窗口(到k - 1) 
+	for(int i = 0;i < k - 1;i++){
+		while(!Q.empty() && a[i] <= a[Q.back()]) Q.pop_back();
+		Q.push_back(i);
+	}
+	
+	for(int i = k - 1;i < n;i++){
+		while(!Q.empty() && a[i] <= a[Q.back()]) Q.pop_back();
+		Q.push_back(i);
+		while(!Q.empty() && Q.front() <= i - k) Q.pop_front();
+		printf("%lld ",a[Q.front()]);
+	}
+	printf("\n");
+}
+
+int main(){
+	cin >> n >> k;
+	for(int i = 0;i < n;i++) cin >> a[i];
+	cmin();
+	Q.clear();
+	cmax();
+	return 0;
+}
+\end{lstlisting}
+
+\subsection{单调栈}
+\begin{lstlisting}[caption={}]
+#include<bits/stdc++.h>
+using namespace std;
+
+//P5788 【模板】单调栈
+typedef long long ll;
+const int N = 1e6 + 10;
+
+ll nums[N],ans[N];
+stack<ll> up;
+
+int main(){
+	ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+	ll n;
+	cin >> n;
+	for(int i = 0;i < n;i++) cin >> nums[i];
+	for(int i = n - 1;i >= 0;i--){
+		while(!up.empty() && nums[i] >= nums[up.top()]) up.pop();
+		if(up.empty()) ans[i] = 0;
+		else ans[i] = up.top() + 1;
+		up.push(i);
+	}
+	for(int i = 0;i < n;i++) cout << ans[i] << " ";
+	return 0;
+}
+\end{lstlisting}
+
+
+\subsection{哈希表}
+\begin{lstlisting}[caption={}]
+#include<iostream>
+#include<string.h>
+using namespace std;
+
+const int N = 100003;
+
+int h[N],e[N],ne[N],idx = 0;
+
+void insert(int x){
+	int k = (x % N + N) % N;
+	e[idx] = x;
+	ne[idx] = h[k];
+	h[k] = idx++;
+}
+
+bool find(int x){
+	int k = (x % N + N) % N;
+	for(int i = h[k];i != -1;i++){
+		if(e[i] == x)
+			return true;
+	}
+	return false;
+}
+
+int main(){
+	int n;
+	scanf("%d",&n);
+	memset(h,-1,sizeof(h));
+	while(n--){
+		char op[2];
+		int x;
+		scanf("%s%d",op,&x);
+		if(op == "1") insert(x);
+		else{
+			if(find(x)) puts("Yes\n");
+			else puts("No\n");
+		}
+	}
+}
+\end{lstlisting}
+
+
+\subsection{ST表}
+ST表是用于解决可重复贡献问题的数据结构,如$max(x,y),gcd(a,b)$等。
+\begin{lstlisting}[caption={}]
+#include<bits/stdc++.h>
+#define all(x) (x).begin(),(x).end()
+using namespace std;
+typedef long long ll;
+const int N = 1e5 + 10;
+
+//P3865 【模板】ST 表
+//静态区间最大值
+ll st[N][20],n,m; 
+//opt需要满足幂等律和结合律
+ll opt(const ll a,const ll b){return max(a,b);}
+
+ll query(ll l,ll r){
+    ll k = log2(r - l + 1); 
+    return opt(st[l][k],st[r - (1 << k) + 1][k]); 
+}
+
+void build_st(){
+	for(int j = 1;j <= 20;j++)
+        for(int i = 1;i + (1 << j) - 1 <= n;i++)
+            st[i][j] = opt(st[i][j - 1],st[i + (1 << (j - 1))][j - 1]);
+}
+
+int main(){
+	ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+	cin >> n >> m;
+	for(int i = 1;i <= n;i++){
+		cin >> st[i][0];
+	}
+	build_st();
+	while(m--){
+		ll l,r;
+		cin >> l >> r;
+		cout << query(l,r) << "\n";
+	}
+	return 0;
+}
+\end{lstlisting}
+
+\subsection{线段树}
+线段树可以在$O(\log N)$的时间复杂度内实现单点修改、区间修改、区间查询（区间求和，求区间最大值，求区间最小值）等操作。
+\begin{lstlisting}[caption={}]
+#include <iostream>
+typedef long long LL,ll;
+LL n, a[100005]; //原数组 
+LL d[270000];  //线段树 
+LL b[270000];  //懒惰标记 
+
+
+//P3372 【模板】线段树 1
+void build(LL l, LL r, LL p) {  // l:区间左端点 r:区间右端点 p:节点标号
+    if (l == r) {		//如果区间长为1 
+        d[p] = a[l];  //将节点赋值   a下标是l！！！！！
+        return;
+    }
+    LL m = l + ((r - l) >> 1);  //取区间中点 
+    build(l, m, p << 1), build(m + 1, r, (p << 1) | 1);  //分别建立左右子树  第一个是字母l！！！！！
+    d[p] = d[p << 1] + d[(p << 1) | 1];   //求和
+}
+
+void update(LL l, LL r, LL c, LL s, LL t, LL p) { // s:要修改区间的左端点  t:要修改区间的左端点  c:加上(更新 )的值 
+	if (l <= s && t <= r) {
+		d[p] += (t - s + 1) * c; // 如果区间被包含了，直接得出答案
+		b[p] += c; //懒惰标记 
+		return;
+	}
+	LL m = s + ((t - s) >> 1);  //取区间中点 
+	if (b[p]){  //如果有懒惰标记 
+		d[p << 1] += b[p] * (m - s + 1); //左结点的区间长度乘c
+		d[(p << 1) | 1] += b[p] * (t - m);  //右结点的区间长度乘c
+		b[p << 1] += b[p];     //左结点添加懒惰标记 
+		b[(p << 1) | 1] += b[p];    //右结点添加懒惰标记 
+	}
+	b[p] = 0; //懒惰标记归零
+	if (l <= m)
+	    update(l, r, c, s, m, p << 1);  //本行和下面的一行用来更新p*2和p*2+1的节点
+	if (r > m) 
+		update(l, r, c, m + 1, t, (p << 1) | 1);
+	d[p] = d[p << 1] + d[(p << 1) | 1];  //更新该节点区间和
+}
+
+LL getsum(LL l, LL r, LL s, LL t, LL p) {
+    if (l <= s && t <= r) return d[p];
+    LL m = s + ((t - s) >> 1);
+    if (b[p]){
+        d[p << 1] += b[p] * (m - s + 1);  //同update
+        d[(p << 1) | 1] += b[p] * (t - m);
+        b[p << 1] += b[p];
+        b[(p << 1) | 1] += b[p];
+	}
+    b[p] = 0;
+    LL sum = 0;
+    if (l <= m)
+        sum = getsum(l, r, s, m, p << 1);  // 本行和下面的一行用来更新p*2和p*2+1的答案
+    if (r > m) 
+        sum += getsum(l, r, m + 1, t, (p << 1) | 1);
+    return sum;
+}
+
+int main() {
+    std::ios::sync_with_stdio(0);
+    LL q, op, i2, i3, i4;
+    std::cin >> n >> q;
+    for (LL i = 1; i <= n; i++) std::cin >> a[i];
+    build(1, n, 1); //从1开始建立线段树
+    while (q--) {
+        std::cin >> op >> i2 >> i3;
+        if(op == 2)
+            std::cout << getsum(i2, i3, 1, n, 1) << std::endl;  // 直接调用操作函数
+        else
+            std::cin >> i4, update(i2, i3, i4, 1, n, 1);
+    }
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{树状数组}
+树状数组是一种支持 单点修改 和 区间查询 的，代码量小的数据结构。普通树状数组维护的信息及运算要满足 结合律 且 可差分，如加法（和）、乘法（积）、异或等。
+\begin{lstlisting}[caption={}]
+//区间加区间和
+int t1[MAXN], t2[MAXN], n;
+
+int lowbit(int x) { return x & (-x); }
+
+void add(int k, int v) {
+  int v1 = k * v;
+  while (k <= n) {
+    t1[k] += v, t2[k] += v1;
+    // 注意不能写成 t2[k] += k * v，因为 k 的值已经不是原数组的下标了
+    k += lowbit(k);
+  }
+}
+
+int getsum(int *t, int k) {
+  int ret = 0;
+  while (k) {
+    ret += t[k];
+    k -= lowbit(k);
+  }
+  return ret;
+}
+
+void add1(int l, int r, int v) {
+  add(l, v), add(r + 1, -v);  // 将区间加差分为两个前缀加
+}
+
+long long getsum1(int l, int r) {
+  return (r + 1ll) * getsum(t1, r) - 1ll * l * getsum(t1, l - 1) -
+         (getsum(t2, r) - getsum(t2, l - 1));
+}
+\end{lstlisting}
+
+\subsection{可持久化线段树(主席树)}
+给定$ n$ 个整数构成的序列 $a$，将对于指定的闭区间$ [l, r]$ 查询其区间内的第$ k$ 小值。
+\begin{lstlisting}[caption={}]
+#include <algorithm>
+#include <cstdio>
+#include <cstring>
+using namespace std;
+const int maxn = 1e5;  // 数据范围
+int tot, n, m;
+int sum[(maxn << 5) + 10], rt[maxn + 10], ls[(maxn << 5) + 10],
+    rs[(maxn << 5) + 10];
+int a[maxn + 10], ind[maxn + 10], len;
+
+int getid(const int &val) {  // 离散化
+  return lower_bound(ind + 1, ind + len + 1, val) - ind;
+}
+
+int build(int l, int r) {  // 建树
+  int root = ++tot;
+  if (l == r) return root;
+  int mid = l + r >> 1;
+  ls[root] = build(l, mid);
+  rs[root] = build(mid + 1, r);
+  return root;  // 返回该子树的根节点
+}
+
+int update(int k, int l, int r, int root) {  // 插入操作
+  int dir = ++tot;
+  ls[dir] = ls[root], rs[dir] = rs[root], sum[dir] = sum[root] + 1;
+  if (l == r) return dir;
+  int mid = l + r >> 1;
+  if (k <= mid)
+    ls[dir] = update(k, l, mid, ls[dir]);
+  else
+    rs[dir] = update(k, mid + 1, r, rs[dir]);
+  return dir;
+}
+
+int query(int u, int v, int l, int r, int k) {  // 查询操作
+  int mid = l + r >> 1,
+      x = sum[ls[v]] - sum[ls[u]];  // 通过区间减法得到左儿子中所存储的数值个数
+  if (l == r) return l;
+  if (k <= x)  // 若 k 小于等于 x ，则说明第 k 小的数字存储在在左儿子中
+    return query(ls[u], ls[v], l, mid, k);
+  else  // 否则说明在右儿子中
+    return query(rs[u], rs[v], mid + 1, r, k - x);
+}
+
+void init() {
+  scanf("%d%d", &n, &m);
+  for (int i = 1; i <= n; ++i) scanf("%d", a + i);
+  memcpy(ind, a, sizeof ind);
+  sort(ind + 1, ind + n + 1);
+  len = unique(ind + 1, ind + n + 1) - ind - 1;
+  rt[0] = build(1, len);
+  for (int i = 1; i <= n; ++i) rt[i] = update(getid(a[i]), 1, len, rt[i - 1]);
+}
+
+int l, r, k;
+
+void work() {
+  while (m--) {
+    scanf("%d%d%d", &l, &r, &k);
+    printf("%d\n", ind[query(rt[l - 1], rt[r], 1, len, k)]);  // 回答询问
+  }
+}
+
+int main() {
+  init();
+  work();
+  return 0;
+}
+\end{lstlisting
+
+\section{数学}
+\subsection{欧拉筛}
+\begin{lstlisting}[caption={}]
+bool isprime[N + 10];
+int prime[N + 10], cnt = 0, temp;
+
+void eular() {
+    memset(isprime, true, sizeof(isprime));
+    isprime[1] = false;
+    for (int i = 2; i <= N; i++) {
+        if (isprime[i]) prime[++cnt] = i;
+        for (int j = 1; j <= cnt && i * prime[j] <= N; j++) {
+            isprime[i * prime[j]] = false;
+            if (i % prime[j] == 0) break;
+        }
+    }
+}
+\end{lstlisting}
+
+\subsection{扩展欧几里得算法}
+\begin{lstlisting}[caption={}]
+int exgcd(int a,int b,int &x,int &y){
+	if(b == 0){
+		x = 1;
+		y = 0;
+		return a;
+	}
+	int d = exgcd(b,a % b,y,x);
+	y -= (a / b) * x;
+	return d;
+}
+\end{lstlisting}
+
+\subsection{欧拉函数}
+$\varphi(n) = n \times \prod_{i = 1}^s{\dfrac{p_i - 1}{p_i}}$。
+
+\begin{lstlisting}[caption={}]
+#include <cmath>
+
+int euler_phi(int n) {
+  int ans = n;
+  for (int i = 2; i * i <= n; i++)
+    if (n % i == 0) {
+      ans = ans / i * (i - 1);
+      while (n % i == 0) n /= i;
+    }
+  if (n > 1) ans = ans / n * (n - 1);
+  return ans;
+}
+\end{lstlisting}
+
+\subsection{乘法逆元}
+如果一个线性同余方程 $ax \equiv 1 \pmod b$，则 $x $称为$ a \bmod b$ 的逆元，记作$ a^{-1}$。
+\begin{lstlisting}[caption={}]
+inv[1] = 1;
+	printf("%d\n",inv[1]);
+	for(int i = 2;i <= n;i++){
+		inv[i] = (long long)(p - p / i) * inv[p % i] % p;
+		printf("%d\n",inv[i]);
+	}
+\end{lstlisting}
+
+
+\section{字符串}
+\subsection{字符串哈希}
+\begin{lstlisting}[caption={}]
+int count_unique_substrings(string const& s) {
+  int n = s.size();
+
+  const int b = 31;
+  const int m = 1e9 + 9;
+  vector<long long> b_pow(n);
+  b_pow[0] = 1;
+  for (int i = 1; i < n; i++) b_pow[i] = (b_pow[i - 1] * b) % m;
+
+  vector<long long> h(n + 1, 0);
+  for (int i = 0; i < n; i++)
+    h[i + 1] = (h[i] + (s[i] - 'a' + 1) * b_pow[i]) % m;
+
+  int cnt = 0;
+  for (int l = 1; l <= n; l++) {
+    set<long long> hs;
+    for (int i = 0; i <= n - l; i++) {
+      long long cur_h = (h[i + l] + m - h[i]) % m;
+      cur_h = (cur_h * b_pow[n - i - 1]) % m;
+      hs.insert(cur_h);
+    }
+    cnt += hs.size();
+  }
+  return cnt;
+}
+\end{lstlisting}
+
+\subsection{字典树}
+\begin{lstlisting}[caption={}]
+struct trie {
+  int nex[100000][26], cnt;
+  bool exist[100000];  // 该结点结尾的字符串是否存在
+
+  void insert(char *s, int l) {  // 插入字符串
+    int p = 0;
+    for (int i = 0; i < l; i++) {
+      int c = s[i] - 'a';
+      if (!nex[p][c]) nex[p][c] = ++cnt;  // 如果没有，就添加结点
+      p = nex[p][c];
+    }
+    exist[p] = 1;
+  }
+
+  bool find(char *s, int l) {  // 查找字符串
+    int p = 0;
+    for (int i = 0; i < l; i++) {
+      int c = s[i] - 'a';
+      if (!nex[p][c]) return 0;
+      p = nex[p][c];
+    }
+    return exist[p];
+  }
+};
+\end{lstlisting}
+
+\section{图论}
+\subsection{拓扑排序}
+\begin{lstlisting}[caption={}]
+int n, m;
+vector<int> G[MAXN];
+int in[MAXN];  // 存储每个结点的入度
+
+bool toposort() {
+  vector<int> L;
+  queue<int> S;
+  for (int i = 1; i <= n; i++)
+    if (in[i] == 0) S.push(i);
+  while (!S.empty()) {
+    int u = S.front();
+    S.pop();
+    L.push_back(u);
+    for (auto v : G[u]) {
+      if (--in[v] == 0) {
+        S.push(v);
+      }
+    }
+  }
+  if (L.size() == n) {
+    for (auto i : L) cout << i << ' ';
+    return true;
+  } else {
+    return false;
+  }
+}
+\end{lstlisting}
+
+\subsection{Dijkstra 算法}
+\begin{lstlisting}[caption={}]
+#include<iostream>
+#include<stdio.h>
+#include<string.h>
+#include<string>
+#include<algorithm>
+#include<queue>
+using namespace std;
+
+//无负权边 
+typedef pair<int,int> PII;
+const int N = 1e6 + 10;
+
+struct edge{
+	int weight;  //权重 
+	int next;   //邻接表的下一项 
+	int to;   //指向的边 
+}e[N];
+
+int head[N]; //头节点为位置 
+int dist[N]; //节点i到起点的距离
+bool st[N]; //st[i]表示该节点是否确定了最小距离，1为true，0为false
+int n,m; //n个点，m条边
+int idx = 0;
+int start; //起点 
+
+//边:a->b,权重为c
+void add(int a,int b,int c){
+	e[idx].to = b;//指向的边 
+	e[idx].next = head[a];
+	e[idx].weight = c; //权重 
+	head[a] = idx; //插入 
+	idx++;
+} 
+
+
+void dijkstra(){
+	priority_queue <PII,vector<PII>,greater<PII> > heap;
+	heap.push({0,start}); //first为距离，second为节点 
+	
+	memset(dist,0x3f,sizeof(dist));  //把距离初始化为正无穷
+	dist[start] = 0; //起点为1
+	 
+	while(heap.size()){
+		PII t = heap.top();
+		heap.pop();
+		
+		int ver = t.second,d = t.first;
+		if(st[ver] == 1) continue;
+		st[ver] = 1;
+		
+		//a -> b,已知a的距离和边权，去更新b的距离
+		for(int i = head[ver];i != -1;i = e[i].next){
+			int j = e[i].to; //指向的边 
+			if(dist[j] > d + e[i].weight){
+				dist[j] = d + e[i].weight;
+				heap.push({dist[j],j});
+			}
+		} 
+	}
+}
+
+int main(){
+	
+	cin >> n >> m >> start;
+	memset(head,-1,sizeof(head));
+	while(m--){
+		int x,y,z;
+		cin >> x >> y >> z;
+		add(x,y,z);
+	}		
+	dijkstra();	
+	for(int i = 1;i <= n;i++){
+		cout << dist[i] << " ";
+	}
+	/*if(dist[n] == 0x3f3f3f3f)
+		cout << "-1\n";
+	else
+		cout << dist[n] << endl;
+	return 0;*/
+}
+ 
+\end{lstlisting}
+
+\subsection{Floyd算法}
+\begin{lstlisting}[caption={}]
+int n,m,k,x,y,z;
+int dist[N][M];
+
+//d[i][j] 表示点i到点j的最短距离 ,k为中间点 
+void floyd(){
+	for(k = 1;k <= n;k++){   //枚举中间点 
+		for(int i = 1;i <= n;i++){ //起始点 
+			for(int j = 1;j <= n;j++){ //目的地 
+				dist[i][j] = min(dist[i][j] , dist[i][k] + dist[k][j]);
+			}
+		}
+	}
+} 
+\end{lstlisting}
+
+\end{document}
+
+%\subsection{单调栈}
+%\begin{lstlisting}[caption={}]
+%插入代码
+%\end{lstlisting}

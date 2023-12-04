@@ -4,9 +4,7 @@ using namespace std;
 
 //1.将两个集合合并
 //2.访问两个集合是否在一个集合中
-
 //接近O(1)
-
 const int N = 100010;
 
 int p[N]; 

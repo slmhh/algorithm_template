@@ -6,7 +6,6 @@
 #include<queue>
 using namespace std;
 
-
 //P3385 ¡¾Ä£°å¡¿¸º»·
 typedef long long ll;
 typedef pair<int,int> PII;

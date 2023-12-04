@@ -62,17 +62,13 @@ void dijkstra(){
 int main(){
 	
 	cin >> n >> m >> start;
-	
 	memset(head,-1,sizeof(head));
-	
 	while(m--){
 		int x,y,z;
 		cin >> x >> y >> z;
 		add(x,y,z);
-	}
-			
-	dijkstra();
-		
+	}		
+	dijkstra();	
 	for(int i = 1;i <= n;i++){
 		cout << dist[i] << " ";
 	}

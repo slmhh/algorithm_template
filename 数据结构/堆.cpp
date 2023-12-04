@@ -5,7 +5,7 @@ using namespace std;
 
 int heap[100],sz = 0;
 int nums[10] = {0,1,9,8,6,7,3,4,2,5};
-
+//小根堆 
 void push(int x){
 	//自己的节点编号 
 	int i = sz++;

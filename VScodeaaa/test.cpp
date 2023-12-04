@@ -1,77 +1,63 @@
-#include<bits/stdc++.h>
+#include<iostream>
+#include<vector>
+#include<queue>
 using namespace std;
-
-//ABCD*EFGH*****L
-
-template<typename T>
-struct Node{
-    T date;
-    Node* left;
-    Node* right;
-    Node(){left = NULL,right = NULL;};
-};
-
-template<typename T>
-class Bitree{
-    public:
-        Node<T>* root;
-        Bitree(){root = new Node<T>;};
-        void Build(string str,Node<T> *temp,int idx);
-        void Front(Node<T> *temp);
-        void Middle(Node<T> *temp);
-        void Back(Node<T> *temp);
-};
-
-template<typename T>
-void Bitree<T>::Build(string str,Node<T> *temp,int idx){
-    if(idx * 2 + 1 < str.size() && str[idx * 2 + 1] != '*'){
-        temp->left = new Node<T>;
-        temp->left->date = str[idx * 2 + 1];
-        Build(str,temp->left,idx * 2 + 1);
-    }
-    if(idx * 2 + 2 < str.size() && str[idx * 2 + 2] != '*'){
-        temp->right = new Node<T>;
-        temp->right->date = str[idx * 2 + 2];
-        Build(str,temp->right,idx * 2 + 2);
-    }
+const int N = 1e6 + 10;
+	
+vector<int> tmp(N,0);
+void Merge(vector<int>& nums,int left,int mid,int right){
+	int i = left,j = mid + 1,k = 0;
+	while(i <= mid && j <= right){
+		if(nums[i] > nums[j]){
+			tmp[k] = nums[j];
+			j++;
+		}
+		else{
+			tmp[k] = nums[i];
+			i++;
+		}
+		k++;
+	}
+	for(;i <= mid;k++,i++) tmp[k] = nums[i];
+	for(;j <= right;j++,k++) tmp[k] = nums[j];
+	k = 0;
+	for(i = left;i <= right;i++,k++) nums[i] = tmp[k];
 }
 
-template<typename T>
-void Bitree<T>::Front(Node<T> *temp){
-    if(temp == NULL) return;
-    cout << temp->date;
-    Front(temp->left);
-    Front(temp->right);
+void MergeSort(vector<int> &nums,int left,int right){
+	if(right - left < 1) return;
+	int mid = (left + right) / 2;
+	MergeSort(nums,left,mid);
+	MergeSort(nums,mid + 1,right);
+	Merge(nums,left,mid,right);
 }
 
-template<typename T>
-void Bitree<T>::Middle(Node<T> *temp){
-    if(temp == NULL) return;
-    Middle(temp->left);
-    cout << temp->date;
-    Middle(temp->right);
+int main() {
+	vector<int> nums;
+	int n;
+	cout << "请输入待排序列长度:\n";
+	cin >> n;
+	cout << "请输入待排序序列:\n";
+	while(n--){
+		int t;
+		cin >> t;
+		nums.push_back(t);
+	}
+	MergeSort(nums,0,nums.size() - 1);
+	cout << "归并排序结果为:\n"; 
+	for (int i = 0; i < nums.size(); i++) {
+		cout << nums[i] << " ";
+	}
+	cout << "\n";
+	return 0;
 }
 
+/*
+13
+31 47 87 28 43 34 89 45 66 93 30 19 51
+17
+74 11 16 70 63 59 31 39 42 88 27 5 66 36 95 42 32
+19
+93 58 0 80 12 9 57 95 13 84 28 56 6 28 42 14 97 70 21
+*/
 
-template<typename T>
-void Bitree<T>::Back(Node<T> *temp){
-    if(temp == NULL) return;
-    Back(temp->left);
-    Back(temp->right);
-    cout << temp->date;
-}
-
-int main(){
-    string str;
-    cin >> str;
-    cout << str <<"\n";
-    Bitree<char> a;
-    a.root->date = str[0];
-    a.Build(str,a.root,0);
-    a.Front(a.root);
-    cout << "\n";
-    a.Middle(a.root);
-    cout << "\n";
-    a.Back(a.root);
-    return 0;
-}

@@ -1,52 +1,49 @@
-/*#include<bits/stdc++.h>
+#include<bits/stdc++.h>
 #define all(x) (x).begin(),(x).end()
 using namespace std;
 
 typedef long long ll;
-typedef pair<ll,ll> PII;
-const int N = 1e5 + 10;
+typedef pair<ll,ll> PLL;
+const int N = 1e5 + 7;
 
-int main(){
-	ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
-	ll n,m;
-	unordered_map<ll,ll> s;
-	cin >> n >> m;
-	while(m--){
-		ll op,i,j,k;
-		cin >> op >> i >> j;
-		if(op == 1){
-			cin >> k;
-			s[i * 100000 + j] = k;
-		}
-		else cout << s[i * 100000 + j] << "\n";
-	}
-	return 0;*/
-	#include<iostream>
-using namespace std;
 
-int ans[13],x[13] = {0},y[13] = {0},rb[30] = {0},lb[30] = {0};
-int n,cnt = 0;
-void dfs(int a){
-    if(a >= n){
-        cnt++;
-        if(cnt > 3) return ;
-        for(int i = 0;i < n;i++)
-            cout << ans[i] << " ";
-        cout << "\n";
-        return ;
-    }
-    for(int i = 0;i < n;i++){
-        if(x[a] || y[i]  || rb[a - i + n]  || lb[a + i] ) continue;
-        x[a] = y[i] = rb[a - i + n] = lb[a + i] = 1;
-        ans[a] = i + 1;
-        dfs(a + 1);
-        x[a] = rb[a - i + n] = y[i] = lb[a + i]  = 0;
-    }
+vector<fun> nums;
+struct fun{
+	ll a,b,c;
+};
+struct val{
+	ll v,idx;
+};
+bool cmp(val a,val b){
+	ll t1,t2;
+	fun temp = nums[a.idx];
+	t1 = temp.a * a.v * a.v + temp.b * a.v + temp.c;
+	temp = nums[b.idx];
+	t2 = temp.a * b.v * b.v + temp.b * b.v + temp.c;
+	return t1 < t2;
 }
 
 int main(){
-    cin >> n;
-    dfs(0);
-    cout << cnt << "\n";
+    ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+    priority_queue<val,vector<val>,cmp() > heap;
+	ll n;
+	cin >> n;
+	fun temp;
+	val t;
+	for(int i = 0;i < n;i++){
+		cin >> temp.a >> temp.b >> temp.c;
+		nums.push_back(temp);
+		t.v = - (temp.c / 2 / temp.a);
+		t.idx = i;
+		if()
+		heap.push(t);
+		t.v++;
+		heap.push(t);
+	}
+	while(m--){
+		t = heap.top()
+		heap.pop();
+
+	}
     return 0;
 }

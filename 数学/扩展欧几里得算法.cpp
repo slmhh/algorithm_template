@@ -14,7 +14,6 @@ int exgcd(int a,int b,int &x,int &y){
 	return d;
 }
 
-
 int main() {
    	int a,b,x,y;
    	cin >> a >> b;
