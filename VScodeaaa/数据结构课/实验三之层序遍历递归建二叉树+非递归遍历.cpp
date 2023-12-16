@@ -19,7 +19,8 @@ class Bitree{
         void Build(string str,Node<T> *temp,int idx);
         void Front(Node<T> *temp);
         void Middle(Node<T> *temp);
-        void Back(Node<T> *temp);
+        void Back(Node<T> *temp);  
+        void level(Node<T> *temp);
         void Draw();
 };
 
@@ -39,7 +40,7 @@ void Bitree<T>::Build(string str,Node<T> *temp,int idx){
 }
 
 
-//非递归后序遍历
+//非递归先序遍历
 template<typename T>
 void Bitree<T>::Front(Node<T> *temp){
     if(!temp) return;
@@ -149,6 +150,22 @@ void Bitree<T>::Draw(){
     }
 }
 
+//层次遍历
+template<typename T>
+void  Bitree<T>::level(Node<T> *temp){
+    if(!temp) return;
+    queue<Node<T> *> q;
+    Node<T> *t = new Node<T>;
+    q.push(temp);
+    while(!q.empty()){
+        t = q.front();
+        q.pop();
+        cout << t->date;
+        if(t->left) q.push(t->left);
+        if(t->right) q.push(t->right);
+    }
+}
+
 int main(){
     string str;
     cout << "请输入带带外部结点的层次遍历序列:\n"; 
@@ -164,5 +181,7 @@ int main(){
     a.Middle(a.root);
     cout << "后序遍历为:\n";
     a.Back(a.root);
+	cout << "层次遍历为:\n";
+	a.level(a.root);
     return 0;
 }
