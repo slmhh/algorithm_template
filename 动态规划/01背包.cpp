@@ -22,3 +22,37 @@ int main(){
 	return 0;
 }
 
+/*
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+const int N = 1e3 + 10;
+
+PII nums[N];
+ll bag[N];
+int main(){
+    ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+    ll n,V,v,w;
+    cin >> n >> V;
+    for(int i = 1;i <= n;i++){
+        cin >> v >> w;
+        nums[i] = {v,w};
+    }
+    //第一问背包可以装的最大价值
+    for(int i = 1;i <= n;i++)
+        for(int j = V;j >= nums[i].first;j--)
+            bag[j] = max(bag[j],bag[j - nums[i].first] + nums[i].second);
+
+    cout << bag[V] << "\n";
+    
+    //第二问刚好装满时的最大价值
+    memset(bag,-0x3f3f3f3f,sizeof(bag));
+    bag[0] = 0;
+    for(int i = 1;i <= n;i++)
+        for(int j = V;j >= nums[i].first;j--)
+            bag[j] = max(bag[j],bag[j - nums[i].first] + nums[i].second);
+
+    cout << max(0LL,bag[V]) << "\n";
+    return 0;
+}
+*/

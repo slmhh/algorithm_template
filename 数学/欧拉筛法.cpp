@@ -2,7 +2,7 @@
 #include<string.h>
 using namespace std;
 
-const int N = 100000;
+const int N = 5e4 + 10;
 
 bool isprime[N + 10];
 int prime[N + 10], cnt = 0, temp;
@@ -24,6 +24,6 @@ int main() {
     for (int i = 1; i < 10; i++) {
         cout << prime[i] << endl;
     }
-
+	cout << "cnt = " << cnt << "\n";
     return 0;
 }

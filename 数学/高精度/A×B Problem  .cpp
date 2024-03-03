@@ -3,7 +3,6 @@
 #include<cmath>
 using namespace std;
 
-
 vector<int> mul(vector<int> &A,vector<int> &B){
 	vector<int> C;
 	if(A.size() < B.size()) return mul(B,A);
@@ -13,13 +12,13 @@ vector<int> mul(vector<int> &A,vector<int> &B){
 	}
 	for(int i = 0;i < B.size();i++){
 		t = 0;
-		for(int j = 0;j < A.size();j++){
+		for(int j = 0;j < A.size() || t;j++){
 			if(j < A.size()) t += A[j] * B[i] + C[i + j];
 			C[j + i] = t % 10;
 			t /= 10;
 		}
 	}
-	while(C.size() > 1 && C.back() == 0) C.pop_back(); //解决前导零 
+	while(C.size() > 1 && C.back() == 0) C.pop_back();
 	return C;
 }
 

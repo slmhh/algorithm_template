@@ -9,8 +9,8 @@ int exgcd(int a,int b,int &x,int &y){
 		y = 0;
 		return a;
 	}
-	int d = exgcd(b,a % b,y,x);
-	y -= (a / b) * x;
+	int d = exgcd(b,a % b,y,x)
+	y = y - (a / b) * x;
 	return d;
 }
 
