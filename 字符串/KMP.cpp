@@ -6,7 +6,7 @@ typedef long long ll;
 ll ne[N],m,n;
 string a,b;
 vector<ll> ans;
-void getnext(string str){ //ÇónextÊı×é 
+void getnext(string str){ //ç”Ÿæˆnextæ•°ç»„
 	ne[0] = 0;
 	for(int i = 1,j = 0;i < str.size();i++){
 		while(j && str[i] != str[j]) j = ne[j - 1];
