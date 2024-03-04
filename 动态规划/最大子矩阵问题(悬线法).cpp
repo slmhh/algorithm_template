@@ -37,8 +37,8 @@ int main(){
 					l[i][j] = min(l[i][j],l[i - 1][j]);
 				}
 			}
-			ans = max(ans,(r[i][j] + l[i][j] - 1) * u[i][j]);//×î´ó¾ØĞÎ
-			//ans = max(ans,min(r[i][j] + l[i][j] - 1,u[i][j]) * min(r[i][j] + l[i][j] - 1,u[i][j])); //×î´óÕı·½ĞÎ
+			ans = max(ans,(r[i][j] + l[i][j] - 1) * u[i][j]);//æœ€å¤§çŸ©å½¢é¢ç§¯
+			//ans = max(ans,min(r[i][j] + l[i][j] - 1,u[i][j]) * min(r[i][j] + l[i][j] - 1,u[i][j])); //æœ€å¤§æ­£æ–¹å½¢é¢ç§¯
 		}
 	}
 	cout << ans << "\n";
