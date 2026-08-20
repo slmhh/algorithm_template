@@ -1,0 +1,311 @@
+\section{字符串}
+\subsection{字符串哈希}
+\begin{lstlisting}[caption={}]
+ll pow1[N],pow2[N];
+struct string_hash{
+    const int Base = 131,M1 = 998244353,M2 = 1e9 + 7; 
+    string str;
+    vector<ll> hash1,hash2;
+    void extend(char c,int idx){
+        pow1[idx] = (pow1[idx - 1] * Base) % M1;
+        hash1[idx] = (hash1[idx - 1] * Base + c) % M1;
+        pow2[idx] = (pow2[idx - 1] * Base) % M2;
+        hash2[idx] = (hash2[idx - 1] * Base + c) % M2;
+    }
+
+    void init(int n){
+        hash1.resize(n + 1,0);
+        hash2.resize(n + 1,0);
+		for(int i = 0;i <= n + 2;i++)
+			pow1[i] = pow2[i] = 1;
+    }
+
+    void init(string str){
+        ll n = str.size();
+        init(n);
+        this->str = str;
+        for(int i = 0;i < n;i++){
+            extend(str[i],i + 1);
+        }
+    }
+    string_hash(){}
+    string_hash(string str){init(str);}
+
+    PII getHash(ll l,ll r){ // 1_idx
+        ll t1 = (hash1[r] - 1ll * hash1[l - 1] * pow1[r - l + 1]) % M1;
+        t1 = (t1 + M1) % M1;
+        ll t2 = (hash2[r] - 1ll * hash2[l - 1] * pow2[r - l + 1]) % M2;
+        t2 = (t2 + M2) % M2;
+        return {t1,t2};
+    }
+};
+\end{lstlisting}
+
+\subsection{KMP}
+在字符串中查找子串,以最坏 $\mathcal O(N+M)$ 的时间计算 $t$ 在 $s$ 中出现的全部位置。
+
+最小周期：字符串长度-整个字符串的 $border$;
+
+最小循环节：区别于周期，当字符串长度 $n \bmod (n - nxt[n]) = 0$ 时，等于最小周期，否则为 $n$ 。
+
+
+\begin{lstlisting}[caption={}]
+typedef long long ll;
+ll ne[N],m,n;
+string a,b;
+vector<ll> ans;
+void getnext(string str){ //求next数组 
+	ne[0] = 0;
+	for(int i = 1,j = 0;i < str.size();i++){
+		while(j && str[i] != str[j]) j = ne[j - 1];
+		if(str[i] == str[j]) j++;
+		ne[i] = j;
+	}
+}
+void kmp(string a,string b){
+	getnext(b);
+	for(int i = 0,j = 0;i < a.size();i++){
+		while(j && a[i] != b[j]) j = ne[j - 1];
+		if(a[i] == b[j]) j++;
+		if(j == b.size()) ans.push_back(i - b.size() + 2);
+	}
+}
+\end{lstlisting}
+
+\subsection{Z函数(扩展KMP)}
+获取字符串 $s$ 和 $s[i,n-1]$ (即以 $s[i]$ 开头的后缀)
+的最长公共前缀(LCP)的长度,总复杂度 $\mathcal O(N)$。
+\begin{lstlisting}[caption={}]
+vector<int> zFunction(string s) {
+    int n = s.size();
+    vector<int> z(n);
+    z[0] = n;
+    for (int i = 1, j = 1; i < n; i++) {
+        z[i] = max(0, min(j + z[j] - i, z[i - j]));
+        while (i + z[i] < n && s[z[i]] == s[i + z[i]]) {
+            z[i]++;
+        }
+        if (i + z[i] > j + z[j]) {
+            j = i;
+        }
+    }
+    return z;
+}
+\end{lstlisting}
+
+\subsection{Manacher}
+\begin{lstlisting}[caption={}]
+//奇偶归一化处理
+string change(string str){
+    string temp = "!#";
+    for(int i = 0;i < str.size();i++){
+        temp += str[i];
+        temp += '#';
+    }
+    return temp;
+}
+
+int Manacher(string str){
+    if(str.size() == 0 || str.size() == 1)
+        return str.size();
+    int maxright = 0,mid = 0,ans = 0;
+    str = change(str);
+    vector<int> p(str.size());
+    for(int i = 1;i < str.size();i++){
+        //对称
+        if(i < maxright) p[i] = min(p[2 * mid - i],maxright - i + 1);
+        else p[i] = 1 + (str[i] != '#');
+        //扩展
+        while(i - p[i] >= 0 && p[i] + i < str.size() && str[i - p[i]] == str[i + p[i]]){
+            p[i]++;
+        }
+        //变更最右回文子串
+        if(i + p[i] - 1 > maxright){
+            mid = i;
+            maxright = i + p[i] - 1;
+        }
+        ans = max(ans,p[i] - 1);
+    }
+    return ans;
+}
+\end{lstlisting}
+
+
+\subsection{字典树}
+\begin{lstlisting}[caption={}]
+struct trie {
+  int nex[100000][26], cnt;
+  bool exist[100000];  // 该结点结尾的字符串是否存在
+
+  void insert(char *s, int l) {  // 插入字符串
+    int p = 0;
+    for (int i = 0; i < l; i++) {
+      int c = s[i] - 'a';
+      if (!nex[p][c]) nex[p][c] = ++cnt;  // 如果没有，就添加结点
+      p = nex[p][c];
+    }
+    exist[p] = 1;
+  }
+
+  bool find(char *s, int l) {  // 查找字符串
+    int p = 0;
+    for (int i = 0; i < l; i++) {
+      int c = s[i] - 'a';
+      if (!nex[p][c]) return 0;
+      p = nex[p][c];
+    }
+    return exist[p];
+  }
+};
+\end{lstlisting}
+
+\subsection{AC自动机}
+$\mathcal O(\sum|s_i|+|S|)$
+\begin{lstlisting}[caption={}]
+struct ACAM{
+    vector<int> ne,in,cnt,f;
+    vector<vector<int>> son;
+    int idx = 0;
+    ACAM(){
+        son.resize(N,vector<int>(26,0));
+        ne.resize(N,0),in.resize(N,0);
+        cnt.resize(N,0),f.resize(N,0);
+    }
+    ll insert(string str){  //插入模式串
+        int p = 0;
+        for(int i = 0;str[i];i++){
+            int a = str[i] - 'a';
+            if(!son[p][a]) son[p][a] = ++idx;  //如果此处字母不存在就创建一个 
+            p = son[p][a];  //指向下一个位置 
+        }
+        cnt[p]++;  //该处单词数+1 
+        return p;
+    }
+
+    void build(){
+        queue<int> q;
+        for(int i = 0;i < 26;i++)
+            if(son[0][i]) q.push(son[0][i]);
+        while(!q.empty()){
+            int u = q.front();
+            q.pop();
+            for(int i = 0;i < 26;i++){
+                int v = son[u][i];
+                if(v){
+                    ne[v] = son[ne[u]][i];  //建立回跳边
+                    q.push(v);
+                    in[son[ne[u]][i]]++;
+                }
+                else son[u][i] = son[ne[u]][i];  //建转移边
+            }
+        }
+    }
+    void query(string str,int n){
+        for(int k = 0,i = 0;k < str.size();k++){
+            i = son[i][str[k] - 'a'];
+            f[i]++;
+            // for(int j = i;j && ~cnt[j];j = ne[j]){
+            //     ans += cnt[j];
+            //     cnt[j] = -1;//不重复计数
+            // }
+        }
+        queue<ll> q;
+        for(int i = 1;i <= idx;i++)
+            if(in[i] == 0) q.push(i);
+        while(!q.empty()){
+            ll u = q.front(),v = ne[u];
+            q.pop();
+            f[v] += f[u],in[v]--;
+            if(v != 0 && in[v] == 0) q.push(v);
+            f[u] *= cnt[u];
+        }
+    }
+};
+\end{lstlisting}
+
+\subsection{后缀数组}
+把字符串的所有后缀按字典序排序后得到的$rk$数组,以 $\mathcal O(N \log{N})$ 的复杂度求解。
+\begin{lstlisting}[caption={}]
+struct SA{
+	std::string str;
+	int n,m,tp = 128,p = 0;
+	std::vector<int> rk,sa;
+	SA(std::string _s){
+		str = " " + _s;
+		n = _s.size();
+		m = (n << 1) + 1;
+		rk.assign(m,0),sa.assign(m,0);
+		work();
+	};
+	void work(){
+		if(n == 1){
+			sa[1] = rk[1] = 1;
+			return;
+        }
+		std::vector<int> cnt(std::max(tp,n) + 1),id(n + 1);
+		for(int i = 1;i <= n;i++) cnt[rk[i] = str[i]]++;									
+		for(int i = 1;i <= tp;i++) cnt[i] += cnt[i - 1];
+		for(int i = n;i >= 1;i--) sa[cnt[rk[i]]--] = i;
+
+		for(int w = 1;w < n;w <<= 1,tp = p){
+			int cur = 0;
+			for(int i = n - w + 1;i <= n;i++) id[++cur] = i;
+			for(int i = 1;i <= n;i++)
+				if(sa[i] > w) id[++cur] = sa[i] - w;
+			std::fill(cnt.begin(),cnt.end(),0);
+			for(int i = 1;i <= n;i++) cnt[rk[i]]++;
+			for(int i = 1;i <= tp;i++) cnt[i] += cnt[i - 1];
+			for(int i = n;i >= 1;i--) sa[cnt[rk[id[i]]]--] = id[i];
+			std::vector<int> temp(m);
+			p = 0;
+			for(int i = 1;i <= n;i++){
+				if(rk[sa[i]] != rk[sa[i - 1]] || rk[sa[i] + w] != rk[sa[i - 1] + w]) p++;
+				temp[sa[i]] = p; 
+			}
+			rk = temp;
+			if(p == n) break;
+		}
+	}
+};
+\end{lstlisting}
+
+\subsection{回文自动机 PAM(回文树)}
+本质不同的回文串个数：$idx - 2$;回文子串出现次数。
+
+对于一个字符串 $s$，它的本质不同回文子串个数最多只有 $|s|$ 个,
+那么,构造 $s$ 的回文树的时间复杂度是 $\mathcal O(|s|)$ 。
+\begin{lstlisting}[caption={}]
+struct PalindromeAutomaton {
+    constexpr static int N = 5e5 + 10;
+    int tr[N][26], fail[N], len[N];
+    int cntNodes, last;
+    int cnt[N];
+    string s;
+    PalindromeAutomaton(string s) {
+        memset(tr, 0, sizeof tr);
+        memset(fail, 0, sizeof fail);
+        len[0] = 0, fail[0] = 1;
+        len[1] = -1, fail[1] = 0;
+        cntNodes = 1;
+        last = 0;
+        this->s = s;
+    }
+    void insert(char c, int i) {
+        int u = get_fail(last, i);
+        if (!tr[u][c - 'a']) {
+            int v = ++cntNodes;
+            fail[v] = tr[get_fail(fail[u], i)][c - 'a'];
+            tr[u][c - 'a'] = v;
+            len[v] = len[u] + 2;
+            cnt[v] = cnt[fail[v]] + 1;
+        }
+        last = tr[u][c - 'a'];
+    }
+    int get_fail(int u, int i) {
+        while (i - len[u] - 1 <= -1 || s[i - len[u] - 1] != s[i]) {
+            u = fail[u];
+        }
+        return u;
+    }
+};
+\end{lstlisting}

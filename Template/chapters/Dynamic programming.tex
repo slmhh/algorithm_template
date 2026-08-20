@@ -1,0 +1,255 @@
+
+\section{动态规划}
+\subsection{多重背包(单调队列优化)}
+\begin{lstlisting}[caption={}]
+int main(){
+    ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+    ll n,V;
+    cin >> n >> V;
+    vector<ll> f(V + 1),g(V + 1);
+    for(int i = 1;i <= n;i++){
+        ll c,w,v;
+        cin >> v >> w >> c;
+        g = f;
+        vector<deque<ll>> q(w);
+        for(int j = 0;j <= V;j++){
+            if(!q[j % w].empty() && (j - q[j % w].front()) / w > c)
+                q[j % w].pop_front();
+            
+            if(!q[j % w].empty()) f[j] = max(f[j],g[q[j % w].front()] + (j - q[j % w].front()) / w * v);
+            while(!q[j % w].empty() && g[j] >= g[q[j % w].back()] + (j - q[j % w].back()) / w * v)
+                q[j % w].pop_back();
+            q[j % w].push_back(j);
+        }
+    }
+    cout << *max_element(f.begin(),f.end());
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{分组背包}
+有 $n$ 组物品，一个容量为 $W$ 的背包，每组物品有若干，同一组的物品最多选一个，第 $i$ 组第 $j$ 件物品的体积为 $w[i][j]$，价值为 $v[i][j]$，求解将哪些物品装入背包，可使物品总体积不超过背包容量，且使总价值最大。
+
+考虑每组中的某件物品选不选，可以选的话，去下一组选下一个，否则在这组继续寻找可以选的物品，当这组遍历完后，去下一组寻找。
+\begin{lstlisting}[caption={}]
+#include <bits/stdc++.h>
+using namespace std;
+const int N = 110;
+int n, W, s[N], w[N][N], v[N][N], dp[N];
+int main(){
+    cin >> n >> W;
+    for (int i = 1; i <= n; i++){
+        scanf("%d", &s[i]);
+        for (int j = 1; j <= s[i]; j++)
+            scanf("%d %d", &w[i][j], &v[i][j]);
+    }
+    for (int i = 1; i <= n; i++)
+        for (int j = W; j >= 0; j--)
+            for (int k = 1; k <= s[i]; k++)
+                if (j - w[i][k] >= 0)
+                    dp[j] = max(dp[j], dp[j - w[i][k]] + v[i][k]);
+    cout << dp[W] << "\n";
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{有依赖的背包}
+有 $n$ 个物品和一个容量为 $W$ 的背包，物品之间有依赖关系，且之间的依赖关系组成一颗树的形状，
+如果选择一个物品，则必须选择它的 父节点，第 $i$ 件物品的体积是 $w[i]$，价值为 $v[i]$,
+依赖的父节点的编号为 $p[i]$，若 $p[i]$ 等于 -1,则为 根节点。求将哪些物品装入背包中,
+使总体积不超过总容量，且总价值最大。
+
+定义 $f[i][j]$ 为以第 $i$ 个节点为根，容量为 $j$ 的背包的最大价值。那么结果就是 $f[root][W]$，为了知道根节点的最大价值，得通过其子节点来更新。所以采用递归的方式。
+对于每一个点，先将这个节点装入背包，然后找到剩余容量可以实现的最大价值，最后更新父节点的最大价值即可。
+\begin{lstlisting}[caption={}]
+#include <bits/stdc++.h>
+using namespace std;
+const int N = 110;
+int n, W, s[N], w[N][N], v[N][N], dp[N];
+int main(){
+    cin >> n >> W;
+    for (int i = 1; i <= n; i++){
+        scanf("%d", &s[i]);
+        for (int j = 1; j <= s[i]; j++)
+            scanf("%d %d", &w[i][j], &v[i][j]);
+    }
+    for (int i = 1; i <= n; i++)
+        for (int j = W; j >= 0; j--)
+            for (int k = 1; k <= s[i]; k++)
+                if (j - w[i][k] >= 0)
+                    dp[j] = max(dp[j], dp[j - w[i][k]] + v[i][k]);
+    cout << dp[W] << "\n";
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{数位DP}
+\begin{lstlisting}[caption={}]
+/* pos 表示当前枚举到第几位,sum 表示 d 出现的次数,limit 为 1 表示枚举的数字有限制,
+zero 为 1 表示有前导 0,d 表示要计算出现次数的数 */
+static constexpr int N = 15;
+i64 dp[N][N],num[N];
+i64 dfs(int pos, i64 sum, int limit, int zero, int d) {
+    if (pos == 0) return sum;
+    if (!limit && !zero && dp[pos][sum] != -1) return dp[pos][sum];
+    i64 ans = 0;
+    int up = (limit ? num[pos] : 9);
+    for (int i = 0; i <= up; i++) {
+        ans += dfs(pos - 1, sum + ((!zero || i) && (i == d)), limit && (i == num[pos]),
+                   zero && (i == 0), d);
+    }
+    if (!limit && !zero) dp[pos][sum] = ans;
+    return ans;
+}
+i64 solve(i64 x, int d) {
+	std::fill(dp.begin(),dp.end(),-1);
+    int len = 0;
+    while (x) {
+        num[++len] = x % 10;
+        x /= 10;
+    }
+    return dfs(len, 0, 1, 1, d);
+}
+\end{lstlisting}
+
+
+\subsection{SOSDP}
+$O(N 2^N)$求解子集和问题
+\begin{lstlisting}[caption={}]
+for(int i = 0;i < (1 << N);i++)
+	dp[i] = a[i];
+for(int i = 0;i < N;i++)
+	for(int mask = (1 << N) - 1;mask >= 0;mask--)
+	    if(mask & (1 << i))
+			dp[mask] += dp[mask ^ (1 << i)];
+\end{lstlisting}
+
+
+\subsection{悬线法}
+\begin{lstlisting}[caption={}]
+int c[N][N],u[N][N],r[N][N],l[N][N];
+int main(){
+	ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+	int n,m,ans = 0;
+	cin >> n >> m;
+	for(int i = 1;i <= n;i++)
+		for(int j = 1;j <= m;j++)
+			cin >> c[i][j];
+
+	for(int i = 1;i <= n;i++){
+		for(int j = 1;j <= m;j++){
+			if(c[i][j]) u[i][j] = u[i - 1][j] + 1;
+			if(c[i][j]) l[i][j] = l[i][j - 1] + 1;
+		}
+	}
+
+	for(int i = 1;i <= n;i++)
+		for(int j = m;j >= 1;j--)
+			if(c[i][j]) r[i][j] = r[i][j + 1] + 1;
+	
+	for(int i = 1;i <= n;i++)
+		for(int j = m;j >= 1;j--)
+
+	for(int i = 1;i <= n;i++){
+		for(int j = 1;j <= m;j++){
+			if(c[i][j]){
+				if(c[i - 1][j]){
+					r[i][j] = min(r[i][j],r[i - 1][j]);
+					l[i][j] = min(l[i][j],l[i - 1][j]);
+				}
+			}
+			ans = max(ans,(r[i][j] + l[i][j] - 1) * u[i][j]);//最大矩形
+			//ans = max(ans,min(r[i][j] + l[i][j] - 1,u[i][j]) * min(r[i][j] + l[i][j] - 1,u[i][j])); //最大正方形
+		}
+	}
+	cout << ans << "\n";
+	return 0;
+}
+\end{lstlisting}
+
+\subsection{编辑距离}
+\begin{lstlisting}[caption={}]
+ll dp[2][2010];
+/*
+替换/跳过	删除
+   插入		当前
+*/
+int main(){
+	ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+	string a,b;
+	cin >> a >> b;
+	for(int i = 1;i <= b.size();i++)
+		dp[0][i] = i;
+
+	for(int i = 1;i <= a.size();i++){			
+		dp[1][0] = i;
+		dp[0][0] = i - 1;
+		for(int j = 1;j <= b.size();j++){
+			if(a[i - 1] == b[j - 1])
+				dp[1][j] = dp[0][j - 1];
+			else
+				dp[1][j] = min(min(dp[0][j],dp[0][j - 1]),dp[1][j - 1]) + 1;
+		}
+		
+		for(int j = 1;j <= b.size();j++){
+			dp[0][j] = dp[1][j];
+		}
+	}
+
+	cout << dp[1][b.size()] << "\n";
+	return 0;
+}
+\end{lstlisting}
+
+\subsection{最小斯坦纳树}
+给定一个带权无向图 $G=(V,E)$ 和终端点集 $S \subseteq V$，求包含 $S$ 中所有点的最小权连通子图。
+\begin{lstlisting}[caption={}]
+const int N = 5e2 + 10,M = 5e4 + 10,mod = 1e6 + 7;
+vector<PII> edge[N];
+ll key[12],dp[N][M],n,m,k,vis[N];
+priority_queue<PII,vector<PII>,greater<PII>> q;
+void dijkstra(ll s){
+	for(int i = 0;i <= n;i++)
+		vis[i] = 0;	
+	while(!q.empty()){
+		PII t = q.top();
+		q.pop();
+		if(vis[t.second]) continue;
+		vis[t.second] = 1;
+		for(auto i : edge[t.second]){
+			ll v = i.first,w = i.second;
+			if(dp[v][s] > dp[t.second][s] + w){
+				dp[v][s] = dp[t.second][s] + w;
+				q.push({dp[v][s],v});
+			}
+		}
+	}
+}
+int main(){
+	ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+    cin >> n >> m >> k;
+	for(int i = 1;i <= m;i++){
+		ll u,v,w;
+		cin >> u >> v >> w;
+		edge[u].push_back({v,w});
+		edge[v].push_back({u,w});
+	}
+	for(int i = 0;i <= n;i++)
+		for(int j = 0;j <= (1LL << k);j++)
+			dp[i][j] = 1e15;
+	for(int i = 1;i <= k;i++){
+		cin >> key[i];
+		dp[key[i]][1LL << (i - 1)] = 0; 
+	}
+	for(ll s = 1;s <= (1LL << k) - 1;s++){
+		for(int i = 1;i <= n;i++){
+			for(ll sub = s & (s - 1);sub > 0;sub = s & (sub - 1))
+				dp[i][s] = min(dp[i][s],dp[i][sub] + dp[i][sub ^ s]); 
+			if(dp[i][s] < 1e15) q.push({dp[i][s],i});
+		}
+		dijkstra(s);
+	}
+	cout << dp[key[1]][(1LL << k) - 1] << "\n";
+	return 0;
+}
+\end{lstlisting}

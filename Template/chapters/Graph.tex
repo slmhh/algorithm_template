@@ -1,0 +1,508 @@
+\section{图论}
+
+\subsection{Dijkstra 算法}
+\begin{lstlisting}[caption={}]
+std::vector<i64> dist(n + 1),vis(n + 1);
+auto dijkstra = [&](int st) -> void{
+	std::fill(dist.begin() + 1,dist.end(),1e10);
+	std::fill(vis.begin() + 1,vis.end(),0);
+	std::priority_queue<std::array<i64,2>,std::vector<std::array<i64,2>>,std::greater<std::array<i64,2>>> pq;
+	dist[st] = 0;
+	pq.push({0,st});
+	while(!pq.empty()){
+		auto [d,u] = pq.top();
+		pq.pop();
+		if(vis[u]) continue;
+		vis[u] = 1;
+		for(auto [v,w] : edge[u]){
+			if(dist[v] > d + w){
+				dist[v] = d + w;
+				pq.push({d + w,v});
+			}
+		}
+	}
+};
+dijkstra(s);
+\end{lstlisting}
+
+
+\subsection{Floyd算法}
+\begin{lstlisting}[caption={}]
+int n,m,k,x,y,z;
+int dist[N][M];
+//dist[i][j] 表示点i到点j的最短距离 ,k为中间点 
+void floyd(){
+	for(k = 1;k <= n;k++){   //枚举中间点 
+		for(int i = 1;i <= n;i++){ //起始点 
+			for(int j = 1;j <= n;j++){ //目的地 
+				dist[i][j] = min(dist[i][j] , dist[i][k] + dist[k][j]);
+			}
+		}
+	}
+} 
+\end{lstlisting}
+
+\subsection{二分图最大匹配(匈牙利算法)}
+\begin{lstlisting}[caption={}]
+#include<bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+const int N = 5e2 + 10;
+
+ll n,m,fri[N],vis[N];
+vector<ll> e[N];
+
+bool match(ll x,ll t){
+    if(vis[x] == t) return false; //已经访问过 
+	vis[x] = t; //记录状态为访问过
+	for(auto i : e[x]){
+		if(fri[i] == 0 || match(fri[i],t)){ //如果暂无匹配，或原来匹配的左侧元素可以找到新的匹配
+			fri[i] = x; //当前左侧元素成为当前右侧元素的新匹配
+			return true; //返回匹配成功
+		}
+	}
+	return false; //循环结束，仍未找到匹配，返回匹配失败
+}
+
+int main(){
+	ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+	ll k,a,b,cnt = 0;
+	cin >> n >> m >> k;
+	while(k--){
+		cin >> a >> b;
+		e[a].push_back(b);
+	}
+	for(int i = 1;i <= n;i++)
+		if(match(i,i)) cnt++;
+	cout << cnt << "\n";
+	return 0;
+}
+\end{lstlisting}
+
+
+\subsection{差分约束}
+给出一组包含 $m$ 个不等式,有 $n$ 个未知数的形如:
+$$ \begin{cases} u_1-v_1\leq w_1 \\u_2-v_2 \leq w_2 \\ \cdots\\ u_m -v_m\leq w_m\end{cases}$$
+的不等式组，求任意一组满足这个不等式组的解。$\sf SPFA$ 解,$\mathcal O(nm)$ 。
+\begin{lstlisting}[caption={}]
+#include<bits/stdc++.h>
+#define all(x) (x).begin(),(x).end()
+using namespace std;
+
+typedef int ll;
+typedef pair<ll,ll> PII;
+const int N = 5e3 + 10,M = 5e3 + 10,mod = 1e9 + 7;
+
+int head[N];
+struct edge{
+    int next,to, w;
+};
+vector<edge> edges;
+
+void add_edge(int u, int v, int w){
+    edges.push_back({head[u],v,w});
+    head[u] = edges.size() - 1;
+}
+bool inqueue[N];
+int cnt[N], dis[N];
+queue<int> Q;
+bool SPFA(int s, int n){
+    memset(dis, 127, sizeof(dis));
+    dis[s] = 0;
+    Q.push(s);
+    while (!Q.empty()){
+        int p = Q.front();
+        if (cnt[p] > n)
+            return false;
+        Q.pop();
+        inqueue[p] = false;
+        for (int eg = head[p]; eg != -1; eg = edges[eg].next){
+            int to = edges[eg].to;
+            if (edges[eg].w + dis[p] < dis[to]){
+//          if (edges[eg].w + dis[p] > dis[to])
+                dis[to] = edges[eg].w + dis[p];
+                if (!inqueue[to]){
+                    Q.push(to);
+                    inqueue[to] = true;
+                    cnt[to]++;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+int main(){
+    ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+    ll n,m,x,y,w;
+    cin >> n >> m;
+    memset(head,-1,sizeof(head));
+    for (int i = 0; i < m; ++i){
+        cin >> x >> y >> w;
+        add_edge(y, x, w);
+    }
+    for (int i = 1; i <= n; ++i) add_edge(0, i, 0);
+    if (SPFA(0, n)){ //SPFA判断负环，无解
+        for (int i = 1; i <= n; ++i)
+           cout << dis[i] << " ";
+    }
+    else cout << "NO\n";
+	return 0;
+}
+\end{lstlisting}
+
+\subsection{2-SAT}
+基于 tarjan 缩点，时间复杂度为 $\mathcal O(N+M)$。
+\begin{lstlisting}[caption={}]
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+struct SCC{
+    // st：是否在栈中  scc：每个点所属的强连通分量编号  cscc：强连通分量的数量
+    vector<ll> dfn,low,stk,scc;
+    vector<bool> st;
+    vector<vector<ll>> e;
+    ll cscc,N,cnt = 0;
+    SCC(int n){
+        dfn.resize(n + 1,0);
+        low.resize(n + 1,0);
+        st.resize(n + 1,false);
+        scc.resize(n + 1);
+        e.resize(n + 1);
+        cscc = 0;
+        N = n;
+    }
+
+    void add(ll u,ll v){
+        e[u].push_back(v);
+    }
+
+    void tarjan(ll p){
+        low[p] = dfn[p] = ++cnt;
+        st[p] = true;
+        stk.push_back(p);
+        for(auto& q : e[p]){
+            if(!dfn[q]){
+                tarjan(q);
+                low[p] = min(low[q],low[p]);
+            }
+            else if(st[q]){
+                low[p] = min(low[p],dfn[q]);
+            }
+        }
+        if(low[p] == dfn[p]){
+            int top;
+            cscc++;
+            do{
+                top = stk.back();
+                stk.pop_back();
+                st[top] = false;
+                scc[top] = cscc;
+            }while(top != p);
+        }
+    }
+
+    void work(){
+        for(int i = 1;i <= N;i++)
+            if(!dfn[i])
+                tarjan(i);
+    }
+};
+//scc编号的顺序符合拓扑序（编号越大的点拓扑序越靠前）
+
+int main(){
+	ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+    ll n,m;
+    cin >> n >> m;
+    SCC sc(2 * n + 1);
+    for(int i = 1;i <= m;i++){
+        ll a,ta,b,tb;
+        cin >> a >> ta >> b >> tb;
+        sc.add((2 * a + ta) ^ 1,2 * b + tb);
+        sc.add((2 * b + tb) ^ 1,2 * a + ta);
+    }
+    sc.work();
+    bool flag = true;
+    vector<ll> ans(n + 1);
+    for(int i = 1;i <= n;i++){
+        if(sc.scc[2 * i] == sc.scc[2 * i + 1]){
+            flag = false;
+            break;
+        }
+        else if(sc.scc[i * 2] > sc.scc[i * 2 + 1])
+            ans[i] = 1;
+        else ans[i] = 0;
+    }
+    if(flag){
+        cout << "POSSIBLE\n";
+        for(int i = 1;i <= n;i++){
+            cout << ans[i] << " ";
+        }
+    }
+    else cout << "IMPOSSIBLE\n";
+	return 0;
+}
+\end{lstlisting}
+
+\subsection{割边}
+\begin{lstlisting}[caption={}]
+//bri为割边
+struct CutBridge{
+    vector<ll> dfn,low,fa;
+    vector<vector<ll>> edge;
+    int n,m,cnt = 0;
+    vector<PII> bri;  
+
+    CutBridge(int n,int m){
+        edge.resize(n + 2),dfn.resize(n + 1,0),low.resize(n + 1,0);
+        fa.resize(n + 1,0);
+        this->n = n,this->m = m;
+    }
+
+    void add(int a,int b){
+        edge[b].push_back(a);
+        edge[a].push_back(b);
+    }
+
+    void tarjan(int p){
+        low[p] = dfn[p] = ++cnt;
+        for (auto to : edge[p]){
+            if (!dfn[to]){
+                fa[to] = p; // 记录父节点
+                tarjan(to);
+                low[p] = min(low[p], low[to]);
+                if (low[to] > dfn[p])
+                    bri.emplace_back(p, to);
+            }
+            else if (fa[p] != to) // 排除父节点
+                low[p] = min(low[p], dfn[to]);
+        }
+    }
+
+    void work(){
+        for(int i = 1;i <= n;i++)
+            if(!dfn[i])
+                tarjan(i);
+    }
+};
+\end{lstlisting}
+
+\subsection{割点}
+\begin{lstlisting}[caption={}]
+vector<ll> edge[N],cut;//cut 存储所有割点
+ll dfn[N],low[N],cnt = 0;
+void tarjan(ll p,bool root = true){
+    ll tot = 0;
+    cnt++;
+    dfn[p] = low[p] = cnt;
+    for(auto& i : edge[p]){
+        if(!dfn[i]){
+            tarjan(i,false);
+            low[p] = min(low[p],low[i]);
+            tot += (low[i] >= dfn[p]);
+        }
+        else low[p] = min(low[p],dfn[i]);
+    }
+    if(tot > root)
+        cut.push_back(p);
+}
+\end{lstlisting}
+
+\subsection{缩点}
+\begin{lstlisting}[caption={}]
+struct SCC{
+    // st：是否在栈中  scc：每个点所属的强连通分量编号  cscc：强连通分量的数量
+    vector<ll> dfn,low,stk,scc;
+    vector<bool> st;
+    vector<vector<ll>> e;
+    ll cscc,N,cnt = 0;
+    SCC(int n){
+        dfn.resize(n + 1,0);
+        low.resize(n + 1,0);
+        st.resize(n + 1,false);
+        scc.resize(n + 1);
+        e.resize(n + 1);
+        cscc = 0;
+        N = n;
+    }
+
+    void add(ll u,ll v){
+        e[u].push_back(v);
+    }
+
+    void tarjan(ll p){
+        low[p] = dfn[p] = ++cnt;
+        st[p] = true;
+        stk.push_back(p);
+        for(auto& q : e[p]){
+            if(!dfn[q]){
+                tarjan(q);
+                low[p] = min(low[q],low[p]);
+            }
+            else if(st[q]){
+                low[p] = min(low[p],dfn[q]);
+            }
+        }
+        if(low[p] == dfn[p]){
+            int top;
+            cscc++;
+            do{
+                top = stk.back();
+                stk.pop_back();
+                st[top] = false;
+                scc[top] = cscc;
+            }while(top != p);
+        }
+    }
+
+    void work(){
+        for(int i = 1;i <= N;i++)
+            if(!dfn[i])
+                tarjan(i);
+    }
+};
+//scc编号的顺序符合拓扑序（编号越大的点拓扑序越靠前）
+
+int main(){
+	ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+    ll n,m,ans = 0;
+    cin >> n >> m;
+    SCC a(n);
+    vector<ll> w(n + 1),nw;
+    for(int i = 1;i <= n;i++) cin >> w[i];
+    for(int i = 1;i <= m;i++){
+        ll u,v;
+        cin >> u >> v;
+        a.add(u,v);
+    }
+    a.work();
+    nw.resize(a.cscc + 1,0);
+    vector<vector<ll>> edge(a.cscc + 1);
+    vector<ll> dp(a.cscc + 1,0);
+    for(int i = 1;i <= n;i++){
+        nw[a.scc[i]] += w[i];
+        dp[a.scc[i]] += w[i];
+        ans = max(ans,dp[a.scc[i]]);
+        for(auto& j : a.e[i]){
+            if(a.scc[i] != a.scc[j]){
+                edge[a.scc[i]].push_back(a.scc[j]);
+            }
+        }
+    }
+    for(int i = a.cscc;i >= 1;i--){
+        for(auto& j : edge[i]){
+            dp[j] = max(dp[j],dp[i] + nw[j]);
+            ans = max(ans,dp[j]);
+        }
+    }
+    cout << ans << "\n";
+	return 0;
+}
+\end{lstlisting}
+
+
+
+
+\subsection{边双连通分量}
+\begin{lstlisting}[caption={}]
+struct EBCC{
+    // st：是否在栈中  ebcc：每个点所属的边双连通分量编号  cebcc：边双连通分量的数量
+    std::vector<i64> dfn,low,stk,ebcc;
+    std::vector<bool> st;
+    std::vector<std::vector<std::array<i64,2>>> e;
+    i64 cebcc,N,cnt,edge_cnt;
+    EBCC(int n): dfn(n + 1),low(n + 1),st(n + 1),
+                 ebcc(n + 1),e(n + 1),cebcc(0),N(n),
+				 cnt(0),edge_cnt(1){}
+    void add(i64 u,i64 v){
+        e[u].push_back({v,edge_cnt << 1});
+        e[v].push_back({u,edge_cnt << 1 | 1});
+		edge_cnt++;
+    }
+    void tarjan(int p, int las){
+		low[p] = dfn[p] = ++cnt;
+		st[p] = true;
+        stk.push_back(p);
+		for(auto [q,idx]: e[p]){
+			if(idx == (las ^ 1)) continue;
+			if(!dfn[q]){
+				tarjan(q, idx);
+				low[p] = std::min(low[p], low[q]);
+			}else low[p] = std::min(low[p], dfn[q]);
+		}
+		if(low[p] == dfn[p]){
+            int top;
+            cebcc++;
+            do{
+                top = stk.back();
+                stk.pop_back();
+                st[top] = false;
+                ebcc[top] = cebcc;
+            }while(top != p);
+        }
+	}
+    void work(){
+        for(int i = 1;i <= N;i++)
+            if(!dfn[i])
+                tarjan(i,0);
+    }
+    // 获取缩点后的树（边双连通分量缩点后的树）
+    std::vector<std::vector<i64>> get_tree(){
+        std::vector<std::vector<i64>> tree(cebcc + 1);
+        for(int u = 1; u <= N; u++){
+            for(auto& [v,_] : e[u]){
+                if(ebcc[u] != ebcc[v]){
+                    tree[ebcc[u]].push_back(ebcc[v]);
+                }
+            }
+        }
+        for(int i = 1; i <= cebcc; i++){
+            std::sort(tree[i].begin(), tree[i].end());
+            tree[i].erase(std::unique(tree[i].begin(), tree[i].end()), tree[i].end());
+        }
+        return tree;
+    }
+};
+\end{lstlisting}
+
+
+\subsection{欧拉路径}
+\subsubsection{有向图的欧拉路径}
+有向图欧拉路径存在:恰有一个点出度比入度多1(为起点);恰有一个点入度比出度多 
+$1$(为终点);恰有$N - 2$ 个点入度均等于出度。如果是欧拉回路，则上方起点与终点的条件不存在，
+全部点均要满足最后一个条件。
+\begin{lstlisting}[caption={}]
+//有向图欧拉路径求解（字典序最小）
+vector<int> ans;
+auto dfs = [&](auto self, int x) -> void {
+    while (ver[x].size()) {
+        int net = *ver[x].begin();
+        ver[x].erase(ver[x].begin());
+        self(self, net);
+    }
+    ans.push_back(x);
+};
+dfs(dfs, s);
+reverse(ans.begin(), ans.end());
+for (auto it : ans) {
+    cout << it << " ";
+}
+\end{lstlisting}
+
+\subsubsection{无向图的欧拉路径}
+无向图欧拉路径存在：恰有两个点度数为奇数(为起点与终点);恰有 $N - 2$个点度数为偶数。
+\begin{lstlisting}[caption={}]
+//无向图欧拉路径求解
+auto dfs = [&](auto self, int x) -> void {
+    while (ver[x].size()) {
+        int net = *ver[x].begin();
+        ver[x].erase(ver[x].find(net));
+        ver[net].erase(ver[net].find(x));
+        cout << x << " " << net << endl;
+        self(self, net);
+    }
+};
+dfs(dfs, s);
+\end{lstlisting}

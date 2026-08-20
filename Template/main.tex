@@ -1,0 +1,46 @@
+\documentclass[6pt,a4paper]{article}
+%\documentclass[twocolumn]{article}
+%用XeLaTex编译！！！
+%用XeLaTex编译！！！
+%用XeLaTex编译！！！
+
+\input{preamble/packages}
+\input{preamble/settings}
+
+\begin{document}
+% 封面
+\thispagestyle{empty}
+\begin{center}
+  \null
+	\vfill
+  \Huge \textbf{ACM-XCPC \\slmhh \\代码模版库}
+  \vfill % 根据需要调整垂直间距
+  \includegraphics[height=12cm]{figures/hbut.pdf} % 图片高度设置为15cm
+\end{center}
+\clearpage % 确保封面后立即分页
+
+% 设置双列排版
+\begin{multicols}{2}
+
+%目录
+\maketitle
+\tableofcontents
+
+\include{chapters/Data structure}
+\include{chapters/Number theory}
+\include{chapters/Combinatorial}
+\include{chapters/Games}
+\include{chapters/Geometry}
+\include{chapters/String}
+\include{chapters/Graph}
+\include{chapters/Tree}
+\include{chapters/Network flow}
+\include{chapters/Dynamic programming}
+\include{chapters/C++ syntax}
+\include{chapters/Other}
+
+% \include{chapters/methodology}
+% \include{chapters/results}
+
+\end{multicols}
+\end{document}

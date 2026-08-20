@@ -1,0 +1,715 @@
+\section{数论}
+\subsection{欧拉筛}
+\subsubsection{线性筛质数}
+\begin{lstlisting}[caption={}]
+bitset<N> isprime;
+vector<i64> prime;
+void euler() {
+    isprime.set();
+    isprime[1] = 0;
+    for (i64 i = 2; i <= N; i++) {
+        if (isprime[i]) prime.push_back(i);
+        for (int j = 0; j < prime.size() && i * prime[j] < N; j++) {
+            isprime[i * prime[j]] = false;
+            if (i % prime[j] == 0) break;
+        }
+    }
+}
+\end{lstlisting}
+
+\subsubsection{线性筛因数个数}
+\begin{lstlisting}[caption={}]
+vector<int> d(N);      // 因数个数
+vector<int> minp_cnt(N, 1);  // 记录最小质因子的指数+1
+void euler_d(){
+    d[1] = 1;
+    for(ll i = 2; i < N; i++){
+        if(isprime[i]){
+            d[i] = minp_cnt[i] = 2;
+            prime.push_back(i);
+        }
+        for(int j = 0; j < prime.size() && i * prime[j] < N; j++){
+            i64 p = prime[j];
+            if(i % p == 0){
+                minp_cnt[i * p] = minp_cnt[i] + 1;
+                d[i * p] = d[i] / minp_cnt[i] * minp_cnt[i * p];
+                break;
+            }
+            else{
+                d[i * p] = d[i] * 2;
+                minp_cnt[i * p] = 2;
+            }
+        }
+    }
+}
+\end{lstlisting}
+
+\subsubsection{线性筛因数和}
+\begin{lstlisting}[caption={}]
+vector<i64> sigma(N);  // 因数和
+vector<i64> minp_pow(N, 1);  // 记录最小质因子的幂次和
+void euler_sigma(){
+    sigma[1] = 1;
+    for (i64 i = 2; i < N; i++) {
+        if(isprime[i]){
+            sigma[i] = minp_pow[i] = i + 1;
+            prime.push_back(i);
+        }
+        for(int j = 0; j < prime.size() && i * prime[j] < N; j++){
+            i64 p = prime[j];
+            if(i % p == 0){
+                minp_pow[i * p] = minp_pow[i] * p + 1;
+                sigma[i * p] = sigma[i] / minp_pow[i] * minp_pow[i * p];
+                break;
+            }
+            else{
+                sigma[i * p] = sigma[i] * sigma[p];
+                minp_pow[i * p] = 1 + p;
+            }
+        }
+    }
+}
+\end{lstlisting}
+
+\subsection{逆元}
+如果一个线性同余方程 $a^x \equiv 1 \pmod b$，则 $x$称为$a \bmod b$ 的逆元，记作$ a^{-1}$。
+\subsubsection{费马小定理}
+设 $p$ 是素数。对于任意整数 $a$ 且$p \perp a$,都成立$a^{p-1}\equiv 1\pmod p$.
+\begin{lstlisting}[caption={}]
+i64 inv(i64 x){
+    return qpow(x,mod - 2);
+}
+\end{lstlisting}
+
+\subsubsection{扩展欧几里得算法}
+其中 $x$ 为 $a$ 的逆元
+\begin{lstlisting}[caption={}]
+int exgcd(int a,int b,int &x,int &y){
+	if(b == 0){
+		x = 1;
+		y = 0;
+		return a;
+	}
+	int d = exgcd(b,a % b,y,x);
+	y -= (a / b) * x;
+	return d;
+}
+\end{lstlisting}
+
+\subsubsection{线性求乘法逆元}
+$$i^{-1} \equiv - \left\lfloor \dfrac{p}{i} \right\rfloor (p\bmod i)^{-1} \pmod p$$
+\begin{lstlisting}[caption={}]
+inv[1] = 1;
+for(int i = 2;i <= n;i++)
+	inv[i] = (long long)(p - p / i) * inv[p % i] % p;
+\end{lstlisting}
+
+\subsection{扩展大步小步算法/exBSGS}
+以 $\mathcal O(\sqrt {P})$ 的复杂度求解 $a^x \equiv b \pmod P$ 的最小自然数 $x$。
+其中标准 $BSGS$ 算法不能计算 $a$ 与 $MOD$ 互质的情况，而 $exbsgs$ 则可以。
+\begin{lstlisting}[caption={}]
+i64 BSGS(i64 a,i64 b,i64 p,i64 k = 1){
+    i64 A = sqrtl(p) + 1;
+    map<i64,i64> mp; 
+    i64 cur = 1;
+    for(int i = 1;i <= A;i++){
+        cur = (cur * a) % p;
+        mp[(cur * b) % p] = i;
+    }
+    i64 temp = cur * k % p;
+    for(int i = 1;i <= A;i++){
+        auto it = mp.find(temp);
+        if(it != mp.end()) return i * A - it->second;
+        temp = (temp * cur) % p;
+    }
+    return -1e18;
+}
+i64 exBSGS(i64 a, i64 b, i64 m, i64 k = 1){  //O(/sqrt(m)logm)
+    a %= m,b %= m;
+    i64 A = a, B = b, M = m;
+    if (b == 1) return 0;
+    i64 cur = 1 % m;
+    for (int i = 0;; i++){
+        if (cur == B) return i;
+        cur = cur * A % M;
+        i64 d = __gcd(a, m);
+        if (b % d) return -1e18;
+        if (d == 1) return BSGS(a, b, m, k * a % m) + i + 1;
+        k = k * a / d % m, b /= d, m /= d;
+    }
+}
+int main(){
+    ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+    i64 a,b,p;
+    cin >> a >> p >> b;
+    i64 temp = exBSGS(a,b,p);
+    if(temp >= 0) cout << temp << "\n";
+    else cout << "No Solution\n";
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{欧拉函数}
+若 $n = p^k$，其中 $p$ 是质数，那么 $\varphi(n) = p^k - p^{k - 1}$
+
+由唯一分解定理，设 
+$n = \prod_{i=1}^{s}p_i^{k_i}$，其中$p_i$ 是质数，有 
+$\varphi(n) = n \times \prod_{i = 1}^s{\dfrac{p_i - 1}{p_i}}$。
+\subsubsection{单个数的欧拉函数}
+$1$ 到 $N$ 中与 $N$ 互质数的个数称为欧拉函数，记作 $\varphi (N)$ 。
+求解欧拉函数的过程即为分解质因数的过程，复杂度 $\mathcal{O}(\sqrt{n})$ 。
+\begin{lstlisting}[caption={}]
+int euler_phi(int n) {
+    int ans = n;
+    for (int i = 2; i * i <= n; i++)
+        if (n % i == 0) {
+        ans = ans / i * (i - 1);
+        while (n % i == 0) n /= i;
+        }
+    if (n > 1) ans = ans / n * (n - 1);
+    return ans;
+}
+\end{lstlisting}
+
+\subsubsection{线性筛欧拉函数}
+\begin{lstlisting}[caption={}]
+vector<int> phi(N);
+void euler_phi(){
+    phi[1] = 1;
+    for(i64 i = 2; i < N; i++){
+        if(isprime[i]){
+            phi[i] = i - 1;
+            prime.push_back(i);
+        }
+        for(int j = 0; j < prime.size() && i * prime[j] < N;j++) {
+            i64 p = prime[j];
+            if(i % p == 0){
+                phi[i * p] = phi[i] * p;
+                break;
+            }
+            else phi[i * p] = phi[i] * (p - 1);
+        }
+    }
+}
+\end{lstlisting}
+
+\subsubsection{欧拉函数常见性质}
+\begin{itemize}
+    \item $1-n$ 中与 $n$ 互质的数之和为 $n \cdot \frac{\varphi(n)}{2}$;
+    \item 若 $a,b$ 互质，则 $\varphi (a \cdot b) = \varphi (a)  \cdot \varphi(b)$ 。实际上，所有满足这一条件的函数统称为积性函数;
+    \item 若 $f$ 是积性函数，且有 $\displaystyle n = \prod ^m _{i =1} p_i ^ {c_i}$ ，那么 $\displaystyle f(n) = \prod ^m _{i =1} f( p_i ^ {c_i} )$;
+    
+    \item 若 $p$ 为质数，且满足 $p \mid  n$:
+    \begin{itemize}
+        \item $n \bmod p^2 = 0$ ，那么 $\varphi (n) = \varphi (\frac{n}{p})  \cdot p$ ;
+        \item $n \bmod p^2 \neq 0$，那么 $\varphi (n) = \varphi (\frac{n}{p})  \cdot (p-1)$ ;
+    \end{itemize}
+    \item 欧拉反演: $\displaystyle\sum _{d \mid n} \varphi (d)= n$ ;
+
+          如 $n=10$ ，则 $d=10/5/2/1$ ，那么 $10 = \varphi(10) + \varphi(5) + \varphi(2) + \varphi(1)$ ;
+    \item $\displaystyle\sum_{i = 1}^{n} \gcd(i, n) = \sum_{d|n} \left\lfloor \frac{n}{d} \right\rfloor \varphi(d)$;
+    \item $\varphi(n) = \displaystyle\sum_{d | n} \mu(d) \frac{n}{d}$;
+    \item $\displaystyle\sum_{i = 1}^n\varphi(n) = \displaystyle\sum_{d = 1}^n \mu(d) \frac{\left\lfloor \frac{n}{d} \right\rfloor(\left\lfloor \frac{n}{d} \right\rfloor + 1)}{2}$;
+\end{itemize}
+
+
+\subsection{莫比乌斯函数}
+$\mu$ 为莫比乌斯函数，定义为:
+        $$\mu(n)= \begin{cases}
+        1&n=1\\
+        0&n\text{ 含有平方因子}\\
+        (-1)^k&k\text{ 为 }n\text{ 的本质不同质因子个数}\\
+        \end{cases}$$
+\subsubsection{单个数的莫比乌斯函函数}
+ $\mathcal{O}(\sqrt{n})$ 。
+\begin{lstlisting}[caption={}]
+int mu(int n) {
+    int res = 1;
+    for(int i = 2; i * i <= n;i++){
+        if(n % i == 0){
+            n /= i;
+            if (n % i == 0) return 0;
+            res = -res;
+        }
+    }
+    if (n > 1) res = -res;
+    return res;
+}
+\end{lstlisting}
+
+\subsubsection{线性筛莫比乌斯函数}
+\begin{lstlisting}[caption={}]
+vector<int> mu(N);
+void euler_mu(){
+    mu[1] = 1;
+    for(i64 i = 2; i < N; i++){
+        if(isprime[i]){
+            mu[i] = -1;
+            prime.push_back(i);
+        }
+        for(int j = 0;j < prime.size() && i * prime[j] < N; j++){
+            i64 p = prime[j];
+            if(i % p == 0){
+                mu[i * p] = 0;
+                break;
+            }
+            else mu[i * p] = -mu[i];
+        }
+    }
+}
+\end{lstlisting}
+
+\subsubsection{莫比乌斯常见性质}
+\begin{itemize}
+    
+    \item 常见积性函数之间的关系:
+        \begin{itemize}
+            \item 常数函数: $1(n) = 1$
+            \item 单位函数: $\epsilon(n) = [n = 1] = \displaystyle\sum_{d | n}\mu(d) \Leftrightarrow \epsilon = \mu \ast 1 $;$f * \varepsilon = \varepsilon * f = f$
+            \item 恒等函数: $id(n) = n = \displaystyle\sum _{d \mid n} \varphi (d) \Leftrightarrow \displaystyle id = \varphi \ast 1$
+            \item 幂  函数: $id_k(n) = n^k$
+            \item 约数个数: $\tau(n) = \displaystyle\sum_{d | n}1  \Leftrightarrow \tau = 1 \ast 1$
+            \item 约数和  : $\sigma(n) = \displaystyle\sum_{d | n}d  \Leftrightarrow \sigma = id \ast 1$
+            \item 约数函数: $\sigma_k(n) = \displaystyle\sum_{d | n}d^k  \Leftrightarrow \sigma_k = id_k \ast 1$
+            \item 欧拉函数: $\varphi(n) = \displaystyle\sum_{i = 1}^x[gcd(x,i) = 1] = \displaystyle\sum_{d | n} d \cdot \mu(\frac{n}{d}) \Leftrightarrow \varphi = id \ast \mu$
+            \item 莫比乌斯函数: $\mu = \mu \ast \epsilon$
+        \end{itemize}
+
+    \item $[gcd(a,b) == 1] = \sum\limits_{d | gcd(a,b)} \mu(d)$
+\end{itemize}
+       
+\subsubsection{莫比乌斯反演}
+如果有 $f(n)=\sum\limits_{d\mid n}g(d)$，那么有 $g(n)=\sum\limits_{d\mid n}\mu(d)f(\frac{n}{d})$。
+
+如果 $g = f * 1$，那么 $f = g * \mu$
+
+一般流程:求解 $\displaystyle \sum^{n}_{i = 1}\sum^{m}_{j = 1}f(gcd(i,j))$
+\begin{itemize}
+    \item 考虑构造出函数$g$,满足下列形式：
+            $$f(n) = g \ast 1 = \displaystyle\sum_{d|n} g(d)$$
+    \item 则求和式子变为:
+        $$\displaystyle \sum^{n}_{i = 1}\sum^{m}_{j = 1}\sum_{d|gcd(i,j)} g(d)$$
+    \item 考虑算术基本定理，发现若满足$d|gcd(i,j)$，则 $d|i $且 $d|j$ 成立。考虑 $g(d)$在何时做出贡献，调整枚举顺序：
+    $$\displaystyle \sum_{d = 1}g(d) \sum^{n}_{i = 1} [d | i] \sum^{m}_{j = 1} [d | j]$$
+
+    \item $\sum^{n}_{i = 1} [d | i]$等价于$1\sim n$中$d$的倍数的个数,则上式等价于:
+     $$\displaystyle \sum_{d = 1}g(d) \left \lfloor \frac{n}{d} \right \rfloor \left \lfloor \frac{m}{d} \right \rfloor$$
+
+\end{itemize}
+    
+\subsection{数论分块}
+$\displaystyle \left\lfloor \frac{n}{l} \right\rfloor = \left\lfloor \frac{n}{l + 1} \right\rfloor
+ = ... = \left\lfloor \frac{n}{r} \right\rfloor \iff \left\lfloor \frac{n}{l} \right\rfloor \le \frac{n}{r} 
+ < \left\lfloor \frac{n}{l} \right\rfloor + 1$ ，根据不等式左侧，
+ 得到 $\displaystyle r \le \left\lfloor \frac{n}{\lfloor \frac{n}{l} \rfloor} \right\rfloor$ 。
+\begin{lstlisting}[caption={}]
+void solve(i64 n){
+    i64 ans = 0;
+    for(i64 i = 1, j; i <= n; i = j + 1){
+        j = n / (n / i);
+        ans += (j - i + 1) * (n / i);
+    }
+    cout << ans << "\n";
+}
+\end{lstlisting}
+
+\subsection{矩阵快速幂}
+\begin{lstlisting}[caption={}]
+static constexpr int mod = 1e9 + 7,N = 2;
+using Martix = array<array<int,N>,N>;
+Martix mul(Martix& a,Martix& b){
+    Martix res{};
+    for(int k = 0;k < N;k++){
+        for(int i = 0;i < N;i++){
+            if(a[i][k] == 0) continue;
+            for(int j = 0;j < N;j++){
+                res[i][j] = (res[i][j] + ((long long)a[i][k] * b[k][j]) % mod) % mod;
+            }
+        }
+    }
+    return res;
+}
+Martix qpow(Martix& a,int b){
+    Martix temp{};
+    for(int i = 0;i < N;i++) temp[i][i] = 1;
+    while(b){
+        if(b & 1) temp = mul(temp,a);
+        a = mul(a,a);
+        b >>= 1;
+    }
+    return temp;
+}
+\end{lstlisting}
+
+\subsection{异或空间线性基(贪心)}
+\begin{lstlisting}[caption={}]
+struct xorBase{
+    vector<i64> p;
+    xorBase():p(61){}
+    void insert(i64 x){
+        for(int i = 60;i >= 0;i--)
+            if(x >> i){
+                if(p[i]) x ^= p[i];
+                else{p[i] = x;return;}
+            }
+    }
+
+    i64 getmx() {
+        i64 ans = 0;
+        for(int i = 60;i >= 0;i--)
+            if((ans ^ p[i]) > ans) ans ^= p[i];
+        return ans;
+    }
+};
+\end{lstlisting}
+\subsubsection{常见操作}
+\begin{itemize}
+    \item 求最小值：如果是求用线性基 $p$内的元素能异或出的最小值，那么就是最小的$p_i$。
+                如果是求整个序列能异或出的最小值的话，需检查有没有元素不能插入线性基，如果有，那么最小值就是$0$，否则依然是最小的$p_i$​。
+    \item 求$k$小值:从一个序列中取任意元素进行异或，求能异或出的所有数字中第$k$小的那个。
+                首先处理这个序列的线性基 $p$，对于每一个 $p_i$,枚举$j=i\sim 1$,如果$p_i$ 二进制的第 $j$ 位为 $1$，那么 $p_i$ 异或上 
+                $p_{j-1}$。将 $k$ 先转成二进制，假如第 $i$  位为 $1$,则 $ans$ 异或线性基中第 $i$个元素(注意不是直接异或 $p_{i-1})$。
+    \item 询问存在性:判断数 x 能否被当前线性基中元素异或得到。把 $x$ 尝试插入进线性基，假如可以插入，说明不能异或得到，假如插不进去，则说明可以异或得到。
+\end{itemize}
+
+
+
+
+\subsection{组合数}
+\subsubsection{通项公式}
+\begin{lstlisting}[caption={}]
+i64 fac[N],invfac[N];
+i64 calc(i64 m,i64 n){
+    return (fac[n] * ((invfac[m] * invfac[n - m]) % mod)) % mod;
+}
+void init(){
+    fac[0] = fac[1] = 1;
+    invfac[0] = invfac[1] = 1;
+	for(int i = 2;i < N;i++){
+		fac[i] = i;
+		invfac[i] = (mod - mod / i) * invfac[mod % i] % mod;
+	}
+    for(int i = 2;i < N;i++){
+		fac[i] = fac[i] * fac[i - 1] % mod;
+		invfac[i] = invfac[i] * invfac[i - 1] % mod;
+    }
+}
+\end{lstlisting}
+
+\subsubsection{卢卡斯定理}
+$$ C^n_m \equiv C^{n \bmod p}_{m \bmod p} \cdot C^{\left \lfloor n/p  \right \rfloor}
+_{\left \lfloor m/p  \right \rfloor} \pmod p $$
+\begin{lstlisting}[caption={}]
+i64 C(i64 m, i64 n, i64 p){
+    return m < n ? 0 : fact[m] * inv(fact[n], p) % p * inv(fact[m - n], p) % p;
+}
+i64 lucas(i64 m, i64 n, i64 p){
+    return n == 0 ? 1 % p : lucas(m / p, n / p, p) * C(m % p, n % p, p) % p;
+}
+\end{lstlisting}
+
+\subsection{中国剩余定理}
+\begin{lstlisting}[caption={}]
+template<typename T>
+T exgcd(T a,T b,T &x,T &y){
+	if(b == 0){
+		x = 1;
+		y = 0;
+		return a;
+	}
+	T d = exgcd(b,a % b,y,x);
+	y = y - (a / b) * x;
+	return d;
+}
+
+template<typename T>
+T inv(T a,T p){
+    T x,y;
+    exgcd(a,p,x,y);
+    return (x % p + p) % p;
+}
+
+int main(){
+    ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+    int T = 1;
+    // cin >> T;
+    while(T--){
+        ll n;
+        __int128 M = 1;
+        cin >> n;
+        vector<ll> a(n + 1),m(n + 1);
+        for(int i = 1;i <= n;i++){
+            cin >> m[i] >> a[i];
+            M *= m[i];
+        }
+        __int128 sum = 0;
+        for(int i = 1;i <= n;i++){
+            __int128 tm = M / m[i];
+            sum = (sum + ((__int128)a[i] * tm) % M * inv(tm,(__int128)m[i]) % M) % M;
+        }
+        cout << (ll)sum << "\n";
+    }   
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{快速傅里叶变换(FFT)}
+\begin{lstlisting}[caption={}]
+#include<bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+const int N = 4e6 + 10;
+const double pi = acos(-1.0);
+
+complex<double> f[N], g[N];
+int R[N];
+void change(complex<double> A[],ll n){
+	for(int i = 0;i < n;i++)
+		R[i] = R[i / 2] / 2 + (i & 1) * (n / 2);
+	for(int i = 0;i < n;i++)
+		if(i < R[i]) swap(A[i],A[R[i]]);
+}
+
+void FFT(complex<double> A[],ll n,int op){ //op为虚部符号，op为1时FFT，op为-1时IFFT
+	change(A,n); //位逆序变换
+	for(int m = 2;m <= n;m <<= 1){  //枚举位宽 
+		complex<double> w1({cos(2 * pi / m),sin(2 * pi / m) * op});
+		for(int i = 0;i < n;i += m){  //枚举块数 
+			complex<double> wk({1,0});
+			for(int j = 0;j < m / 2;j++){
+				complex<double> x = A[i + j],y = A[i + j + m / 2] * wk;
+				A[i + j] = x + y;
+				A[i + j + m / 2] = x - y;
+				wk = wk * w1;
+			}
+		}
+	} 
+}
+
+int main(){
+	ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+	ll n,m;
+	cin >> n >> m;
+	for(ll i = 0;i <= n;i++) cin >> f[i];
+	for(ll i = 0;i <= m;i++) cin >> g[i];
+	ll len = 1 << max((ll)ceil(log2(n + m)),1LL);  //FFT需要项数为2的整数次方倍,len为第一个大于a.size() + b.size()的二的正整数次方
+	FFT(f,len,1),FFT(g,len,1);  //系数表达转点值表达
+	for(int i = 0;i <= len;i++)
+		f[i] = f[i] * g[i];
+	FFT(f,len,-1);  //点值表达转系数表达
+	for(ll i = 0;i <= m + n;i++)
+		cout << (ll)(f[i].real() / len + 0.5) << " ";
+	return 0;
+}
+\end{lstlisting}
+
+\subsection{快速数论变换(NTT)}
+\begin{lstlisting}[caption={}]
+static constexpr int N = 4e6 + 6,g = 3,mod = 998244353;
+i64 ni,gi;
+i64 qpow(i64 a,i64 b){
+    i64 ans = 1;
+    for(;b;a = a * a % mod,b >>= 1)
+        if(b & 1) ans = ans * a % mod;
+    return ans;
+}
+void NTT(vector<i64>& A,int n,int op){
+    vector<i64> R(n + 1,0);
+	for(int i = 0;i < n;i++)
+		R[i] = R[i / 2] / 2 + (i & 1) * (n / 2);
+	for(int i = 0;i < n;i++)
+		if(i < R[i]) swap(A[i],A[R[i]]);
+	for(int i = 2;i <= n;i <<= 1){
+        i64 g1 = qpow(op == 1 ? g : gi,(mod - 1) / i);
+        for(int j = 0;j < n;j += i){
+            i64 gk = 1;
+            for(int k = j;k < j + i / 2;k++){
+                i64 x = A[k],y = gk * A[k + i / 2] % mod;
+                A[k] = (x + y) % mod;
+                A[k + i / 2] = (x - y + mod) % mod;
+                gk = gk * g1 % mod;
+            }
+        }
+    }
+}
+void clac(vector<i64>& a,vector<i64>& b){
+    const int la = a.size(),lb = b.size();
+	int len = 1 << max((int)ceil(log2(la + lb)),1);
+    vector<i64> f(3 * len + 1,0),h(3 * len + 1,0);
+	for(int i = 0;i < la;i++) f[i] = a[i];
+	for(int i = 0;i < lb;i++) h[i] = b[i];
+    gi = qpow(g,mod - 2),ni = qpow(len,mod - 2);
+	NTT(f,len,1),NTT(h,len,1);
+	for(int i = 0;i <= len;i++) 
+        f[i] = (f[i] * h[i]) % mod;
+	NTT(f,len,-1);
+	for(int i = 0;i <= la + lb - 2;i++) 
+        cout << (f[i] * ni) % mod << " ";
+}
+\end{lstlisting}
+
+\subsection{高斯消元}
+\begin{lstlisting}[caption={}]
+static constexpr double eps = 1e-8;
+int Gauss(std::vector<std::vector<double>>& a){
+	int n = a.size() - 1,now = 1;
+	for(int i = 1;i <= n;i++){ //枚举列
+		int r = now;
+		for(int j = i;j <= n;j++){ //找最大减小误差
+			if(fabs(a[j][i]) > fabs(a[r][i])) r = j;
+		}
+		if(fabs(a[r][i]) < eps) continue;
+		if(r != now) swap(a[now],a[r]);
+		for(int j = 1;j <= n;j++){
+			if(j == now) continue;
+			double div = a[j][i] / a[now][i];
+			for(int k = i;k <= n + 1;k++) a[j][k] -= a[now][k] * div;
+		}
+		now++;
+	}
+	if(now <= n){
+		while(now <= n){
+			if(fabs(a[now][n + 1]) > eps) return -1;
+			now++;
+		}
+		return 0;
+	}
+	for(int i = 1;i <= n;i++) a[i][n + 1] /= a[i][i];
+	return 1;
+} // 1 有解,-1无解,0无穷解
+\end{lstlisting}
+
+\subsection{rho算法与MR素性测试}
+\begin{lstlisting}[caption={}]
+std::mt19937_64 rng {std::chrono::steady_clock::now().time_since_epoch().count()};
+i64 gcd(i64 a, i64 b);
+i64 qpow(i64 a, i64 n, i64 p);
+bool Mii64er_Rabin(i64 x){
+    if (x < 3) return x == 2;
+    if (x % 2 == 0) return false;
+    constexpr i64 A[] = {2, 325, 9375, 28178, 450775, 9780504, 1795265022};
+	i64 d = x - 1, r = 0;
+    while (d % 2 == 0) d /= 2, ++r;
+    for (auto a : A){
+        i64 v = qpow(a, d, x);
+        if(v <= 1 || v == x - 1) continue;
+        for(int i = 0; i < r; ++i){
+            v = (__int128)v * v % x;
+            if(v == x - 1 && i != r - 1){
+                v = 1;
+                break;
+            }
+            if(v == 1)  return false;
+        }
+        if(v != 1) return false;
+    }
+    return true;
+}
+i64 Poi64ard_Rho(i64 N){
+    if (N == 4) return 2;
+    if (Mii64er_Rabin(N))return N;
+    while(true){
+        i64 c = rng() % (N - 1) + 1;
+        auto f = [=](i64 x) {return ((__int128)x * x + c) % N;};
+        i64 t = 0, r = 0, p = 1,q;
+        do{
+            for(int i = 0; i < 128; ++i){
+                t = f(t),r = f(f(r));
+                if (t == r || (q = (__int128)p * abs(t - r) % N) == 0)
+                    break;
+                p = q;
+            }
+            i64 d = gcd(p, N);
+            if (d > 1) return d;
+        }while (t != r);
+    }
+	return N;
+}
+unordered_map<i64, i64> um;
+i64 max_prime_factor(i64 x){
+    if(um.count(x)) return um[x];
+    i64 fac = Pollard_Rho(x);
+    if(fac == 1 || fac == x) um[x] = x;
+    else um[x] = max(max_prime_factor(fac),max_prime_factor(x / fac));
+    return um[x];
+}
+\end{lstlisting}
+
+\subsection{求解连续按位异或}
+以 $\mathcal O(1)$ 复杂度计算 $0\oplus1\oplus\dots\oplus n$ 。
+\begin{lstlisting}[caption={}]
+unsigned xor_n(unsigned n) {
+    unsigned t = n & 3;
+    if (t & 1) return t / 2u ^ 1;
+    return t / 2u ^ n;
+}
+\end{lstlisting}
+\begin{lstlisting}[caption={}]
+i64 xor_n(i64 n) {
+    if (n % 4 == 1) return 1;
+    else if (n % 4 == 2) return n + 1;
+    else if (n % 4 == 3) return 0;
+    else return n;
+}
+\end{lstlisting}
+
+\subsection{其他结论}
+
+\begin{itemize}
+    \item 欧拉降幂公式(扩展欧拉定理):
+		$$a^b\equiv
+        \begin{cases}
+        a^{b\bmod\varphi(m)},\,&\gcd(a,\,m)=1\\
+        a^b,&\gcd(a,\,m)\ne1,\,b<\varphi(m)\\
+        a^{b\bmod\varphi(m)+\varphi(m)},&\gcd(a,\,m)\ne1,\,b\ge\varphi(m)
+        \end{cases}$$
+    \item 约数个数定理: 设$n = p_1^{a_1}\times p_1^{a_1} \times \cdots \times p_m^{a_m}$,其中$p_1,p_2,\cdots,p_3$均为互不相等的质数，则$n$的因数个数为：
+$d(n) = \prod\limits_{i = 1}^{m}(a_i + 1)$.
+
+    \item 约数和定理: $\sigma(n) = \sum\limits_{d | n} d = \prod\limits_{i = 1}^{k} \frac{p_i^{a_i+1} - 1}{p_i - 1}$
+    \item 约数个数前缀和: $\sum \limits _{i = 1}^{n} d(i) = \sum \limits _{i = 1}^{n}{\lfloor \frac{n}{i} \rfloor}$
+    \item 约数和前缀和: $\sum \limits _{i = 1}^{n} \sigma(i) = \sum \limits _{i = 1}^{n}{\lfloor \frac{n}{i} \rfloor i}$
+    \item 勒让德定理（Legendre 定理）: 
+        对于质数$p$，函数$v_p(n)$为n的标准分解后$p$的次数，有
+        $$v_p(n!) = \sum\limits_{i = 1}^{\infty} \lfloor \frac{n}{p^i} \rfloor$$
+
+        令函数$s_p(n)$为$n$在$p$进制下的数位和有：
+        $$v_p(n!) = \frac{n - s_p(n)}{p - 1}$$
+        $p = 2$时有：
+        $$v_2(n!) = n - popcount(n)$$
+
+        kummer定理,二项式系数:
+        $$v_p((^n_m)) = \frac{s_p(m)+s_p(n - m)-s_p(n)}{p - 1}$$
+    
+    \item 霍尔定理(Hall 定理) :
+            二分图存在完美匹配的判定：对于一个二分图$G(V_1,V_2,E) (|V_1| \le |V_2|)$，对与$\forall v_1 \subseteq V_1,v2 = \{v_j | (v_i,v_j) \in E,v_i \in V_1,v_j \in V_2 \}$，其存在完美匹配的条件为$\forall v_1 
+            \in V_1,|v_1| <= |v_2|$.
+    \item Dilworth定理: 偏序集能划分成的最少的全序集个数等于最大反链的元素个数，即数组的不重叠的上升子序列数量最小值 = 逆序数组的最长上升子序列长度。
+    \item 柯尼希定理(Kőnig 定理): 二分图最小点覆盖的点数=最大匹配数。
+    \item 切比雪夫距离和曼哈顿距离:
+        将一个点$(x,y)$的坐标变为$(x+y,x - y)$后,原坐标系中的曼哈顿距离 = 新坐标系中的切比雪夫距离
+
+        将一个点$(x,y)$的坐标变为$(\frac{x + y}{2},\frac{x - y}{2})$ 后,原坐标系中的切比雪夫距离 = 新坐标系中的曼哈顿距离
+    \item 基姆拉尔森公式:用于计算某一天是星期几:
+        $$h = (d + \lfloor \frac{13(m + 1)}{5} \rfloor + y + \lfloor \frac{y}{4} \rfloor + \lfloor \frac{c}{4} \rfloor + 5c) \mod 7$$ 
+    \item $ a - b <= a \oplus b <= a + b  $
+    \item 对于给定的 $X$ 和序列 $[a_1,a_2,…,a_n]$ ，有：${X=(X \&a_1)or(X\&a_2)or…or(X\&a_n)}$。
+    \item $gcd(x,y) = x \oplus y \to gcd(x,y)=y-x$
+    \item $gcd(x,y) = x + y \to gcd(x,y)=max(x,y)$
+    \item 以下式子成立： $\gcd (a, m) = \gcd(a+x,m) \Leftrightarrow  \gcd(a, m)=\gcd(x,m)$ 。
+    求解上式满足条件的 $x$ 的数量即为求比 $\dfrac{m}{\gcd(a,m)}$ 小且与其互质的数的个数，即用欧拉函数求解 $\varphi \Big(\dfrac{m}{\gcd(a,m)} \Big)$ 。
+    \item 令 $\left\{\begin{matrix} X=a+b\\ 
+            Y=a\oplus b
+            \end{matrix}\right.$ ，如果该式子有解，那么存在前提条件 $\left\{\begin{matrix} X \ge Y \\ 
+            X,Y \text{同奇偶}
+            \end{matrix}\right.$ ；进一步，此时最小的 $a$ 的取值为 $\dfrac{X-Y}{2}$
+    \item $x+y=x|y+x\&y$ ，对于两个数字 $x$ 和 $y$ ，如果将 $x$ 变为 $x|y$ ，同时将 $y$ 变为 $x\&y$ ，
+            那么在本质上即将 $x$ 二进制模式下的全部 $1$ 移动到了 $y$ 的对应的位置上
+    \item 一个正整数 $x$ 异或、加上另一个正整数 $y$ 后奇偶性不发生变化：$a+b\equiv a\oplus b(\bmod2)$
+    \item 贝叶斯公式：$$P(A_i|B) = \frac{P(A_iB)}{P(B)}=\frac{P(A_i)P(B|A_i)}{\displaystyle\sum^{n}_{j=1}P(A_j)P(B|A_j)}$$
+    \item 全概率公式: $$P(B) = \sum\limits_{i=1}^{n}P(A_i)P(B | A_i)$$
+    \item 全期望公式: $$E(Y) = E(E(Y|X))=\sum \limits_{X}E(Y|X)P(X)$$
+    \item $\forall a,b,c \in  \mathbb{Z},\left \lfloor \frac{a}{bc}  \right \rfloor 
+        = \left \lfloor \frac{\left \lfloor \frac{a}{b}  \right \rfloor }{c}  \right \rfloor $
+\end{itemize}

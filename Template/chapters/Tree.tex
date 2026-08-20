@@ -1,0 +1,393 @@
+\section{树上问题}
+\subsection{树的直径}
+树上任意两节点之间最长的简单路径即为树的「直径」。
+\begin{lstlisting}[caption={}]
+std::vector<int> dp(n + 1);
+int ans = 0;
+auto dfs = [&](auto&&self,int p,int f) -> void{
+	for(auto v : edge[p]){
+		if(v == f) continue;
+		self(self,v,p);
+		ans = std::max(ans,dp[p] + dp[v] + 1);
+		dp[p] = std::max(dp[p],dp[v] + 1);
+	}
+};
+dfs(dfs,1,0);
+\end{lstlisting}
+
+\subsection{树的重心}
+\begin{itemize}
+    \item 某个点是树的重心等价于它最大子树大小不大于整棵树大小的一半。
+	\item 树至多有两个重心。如果树有两个重心，那么它们相邻。此时树一定有偶数个节点，
+			且可以被划分为两个大小相等的分支，每个分支各自包含一个重心。
+	\item 树中所有点到某个点的距离和中，到重心的距离和是最小的；如果有两个重心，
+			那么到它们的距离和一样。反过来，距离和最小的点一定是重心。
+	\item 往树上增加或减少一个叶子，如果原节点数是奇数，那么重心可能增加一个，原重心仍是重心；
+			如果原节点数是偶数，重心可能减少一个，另一个重心仍是重心。
+    \item 把两棵树通过一条边相连得到一棵新的树，则新的重心在较大的一棵树一侧的连接点与原重心之间的简单路径上。
+		如果两棵树大小一样，则重心就是两个连接点。
+\end{itemize}
+\begin{lstlisting}[caption={}]
+std::vector<int> dp(n + 1),siz(n + 1,1);
+std::array<int,2> ans{};
+auto dfs = [&](auto&&self,int p,int f) -> void{
+	for(auto v : edge[p]){
+		if(v == f) continue;
+		self(self,v,p);
+		siz[p] += siz[v];
+		dp[p] = std::max(dp[p],siz[v]);
+	}
+	dp[p] = std::max(dp[p],n - siz[p]);
+	if(ans[0] == 0) ans[0] = p;
+	else if(dp[p] < dp[ans[0]]) ans = {p,0};
+	else if(dp[p] == dp[ans[0]]) ans[1] = p;
+};
+dfs(dfs,1,0);
+\end{lstlisting}
+
+\subsection{最近公共祖先(LCA)}
+\subsubsection{倍增算法}
+\begin{lstlisting}[caption={}]
+#include<bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+const int N = 5e5 + 10,mod = 1e6 + 7;
+
+struct edge{
+	ll next,to;
+};
+
+vector<edge> e;
+ll head[N],Log2[N], fa[N][20], dep[N]; // fa的第二维大小不应小于log2(N)
+bool vis[N];
+
+void add(ll a,ll b){
+	e.push_back({head[a],b});
+	head[a] = e.size() - 1;
+}
+
+//O(nlog n)预处理
+void dfs(ll cur,ll fath = 0){
+    if (vis[cur])
+        return;
+    vis[cur] = true;
+    dep[cur] = dep[fath] + 1;
+    fa[cur][0] = fath;
+    for (int i = 1; i <= Log2[dep[cur]]; ++i)
+        fa[cur][i] = fa[fa[cur][i - 1]][i - 1];
+    for (int eg = head[cur]; eg != -1; eg = e[eg].next)
+        dfs(e[eg].to, cur);
+}
+
+//O(log n)查询
+ll lca(ll a,ll b){
+    if (dep[a] > dep[b])
+        swap(a, b);
+    while (dep[a] != dep[b])
+        b = fa[b][Log2[dep[b] - dep[a]]];
+    if (a == b)
+        return a;
+    for (int k = Log2[dep[a]]; k >= 0; k--)
+        if (fa[a][k] != fa[b][k])
+            a = fa[a][k], b = fa[b][k];
+    return fa[a][0];
+}
+
+int main(){
+	ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+	ll n,m,s,a,b;
+	cin >> n >> m >> s;
+	for(int i = 0;i <= n;i++) head[i] = -1;
+	for(int i = 0;i < n - 1;i++){
+		cin >> a >> b;
+		add(a,b);
+		add(b,a);
+	}
+	for (int i = 2; i <= n; ++i)
+        Log2[i] = Log2[i / 2] + 1;  //预处理出log2(x)
+	dfs(s);
+	while(m--){
+		cin >> a >> b;
+		cout << lca(a,b) << "\n";
+	}
+	return 0;
+}
+\end{lstlisting}
+
+\subsubsection{重链剖分}
+\begin{lstlisting}[caption={}]
+struct HLD{
+	std::vector<std::vector<int>> edge;
+	std::vector<int> fa,dep,son,siz,top,dfn;
+	int cnt,root;
+	HLD(){};
+	HLD(int n,int r = 1):edge(n + 1),fa(n + 1),dep(n + 1),
+						 son(n + 1),siz(n + 1),top(n + 1),
+						 dfn(n + 1),cnt(0),root(r){};
+	void addEdge(int u,int v){
+		edge[u].push_back(v);
+		edge[v].push_back(u);
+	}
+	void dfs1(int p){
+		dep[p] = dep[fa[p]] + 1,siz[p] = 1;
+		for(auto v : edge[p]){
+			if(v == fa[p]) continue;
+			fa[v] = p;
+			dfs1(v);
+			siz[p] += siz[v];
+			if(siz[v] > siz[son[p]]) son[p] = v;
+		}
+	}
+	void dfs2(int p,int t){
+		dfn[p] = ++cnt,top[p] = t;
+		if(son[p]) dfs2(son[p],t);
+		for(auto v : edge[p]){
+			if(v == fa[p] || v == son[p]) continue;
+			dfs2(v,v);
+		}
+	}
+	int lca(int u,int v){
+		while(top[u] != top[v]){
+			if(dep[top[u]] > dep[top[v]]) u = fa[top[u]];
+			else v = fa[top[v]];
+		}
+		if(dep[u] >= dep[v]) return v;
+		return u;
+	}
+	void work(){
+		dfs1(root);
+    	dfs2(root,root);
+	}
+};
+\end{lstlisting}
+
+
+\subsection{树上差分}
+\begin{lstlisting}[caption={}]
+//点差分
+//设将两点u,v之间路径上的所有点权增加x,则操作如下：
+diff[u] += x,diff[v] += x,diff[lca(u,v)] -= x,diff[fa[lca(u,v)]] -= x;
+
+//边差分
+// 将两点u,v之间路径上的所有边权增加x,以每条边两端深度较大的节点存储该边的差分数组，则操作如下：
+diff[u] += x,diff[v] += x,diff[lca(u,v)] -= 2 * x;
+\end{lstlisting}
+
+
+\subsection{树上点分治}
+遍历树上所有的路径，考虑包含这个点的路径和不包含这个点的路径。对于前者，我们做一趟dfs；
+对于后者，我们删除该点后，对所有子树递归地处理即可。
+
+例题：给定一棵有$n(n \le 10^4)$个点的树，$m(m \le 100)$次询问询问树上距离为$k$的点对是否存在。
+\begin{lstlisting}[caption={}]
+//Centroid Decomposition O(NlogN)
+struct CD{
+	std::vector<std::vector<std::array<int,2>>> edge;
+	std::vector<int> siz,del,dp,stk,dep,ask,ans;
+	int cnt = 0,root,n,m;
+	CD(){};
+	CD(int _n,int _m):edge(_n + 1),siz(_n + 1),del(_n + 1),dp(_n + 1),
+					dep(_n + 1),ask(_m + 1),ans(_m + 1),n(_n),m(_m){dp[0] = 2e9;}
+	void addEdge(int u,int v,int w){
+		edge[u].push_back({v,w});
+		edge[v].push_back({u,w});
+	}
+	void getSize(int p,int f = 0){
+		siz[p] = 1,cnt++;
+		for(auto [v,_] : edge[p]){
+			if(v == f || del[v]) continue;
+			getSize(v,p);
+			siz[p] += siz[v];
+		}
+	}
+	void getRoot(int p,int f = 0){
+		dp[p] = cnt - siz[p];
+		for(auto [v,_] : edge[p]){
+			if(v == f || del[v]) continue;
+			getRoot(v,p);
+			dp[p] = std::max(dp[p],siz[v]);
+		}
+		if(dp[p] < dp[root]) root = p;
+	}
+	void getDist(int p,int f = 0){
+		stk.push_back(dep[p]);
+		for(auto [v,w] : edge[p]){
+			if(v == f || del[v]) continue;
+			dep[v] = dep[p] + w;
+			getDist(v,p);
+		}
+	}
+	void calc(int u){
+		cnt = 0,getSize(u);
+		root = 0,getRoot(u);
+		del[root] = 1;
+		std::unordered_set<int> st;
+		st.insert(0);
+		for(auto [v,w] : edge[root]){
+			if(del[v]) continue;
+			dep[v] = w,getDist(v);
+			for(int i = 1;i <= m;i++){
+				for(auto len : stk){
+					if(st.count(ask[i] - len))
+						ans[i] = 1;
+				}
+			}
+			while(!stk.empty()){
+				st.insert(stk.back());
+				stk.pop_back();
+			}
+		}
+		for(auto [v,_] : edge[root]){
+			if(del[v]) continue;
+			calc(v);
+		}
+	}
+};
+\end{lstlisting}
+
+
+
+
+\subsection{树上启发式合并}
+\begin{lstlisting}[caption={}]
+const int N = 1e5 + 10,mod = 998244353;
+
+//dsu on tree O(nlong n)
+// son:重儿子,L[u]: 结点 u 的 DFS 序,R[u]: 结点 u 子树中结点的 DFS 序的最大值,Node[i]: DFS 序为 i 的结点
+// ans: 存答案,cnt[i]: 颜色为 i 的结点个数,totColor: 目前出现过的颜色个数
+ll n,idx,col[N],siz[N],node[N],l[N],r[N],son[N];
+ll ans[N],cnt[N],colcnt;
+vector<ll> edge[N];
+
+void add(ll p){
+    if(cnt[col[p]] == 0) colcnt++;
+    cnt[col[p]]++;
+}
+
+void del(ll p){
+    cnt[col[p]]--;
+    if(cnt[col[p]] == 0) colcnt--;
+}
+
+void dfs(ll p,ll f){
+    l[p] = ++idx;
+    node[idx] = p;
+    siz[p] = 1;
+    for(auto& i : edge[p]){
+        if(i == f) continue;
+        dfs(i,p);
+        siz[p] += siz[i];
+        if(!son[p] || siz[son[p]] < siz[i]) son[p] = i;
+    }
+    r[p] = idx;
+}
+
+//只保留对重儿子的操作
+void dfs1(ll p,ll f,bool keep){
+    for(auto& i : edge[p]){
+        if(i == f || i == son[p]) continue;
+        dfs1(i,p,false);
+    }
+    if(son[p]){
+        dfs1(son[p],p,true);
+    }
+    for(auto& i : edge[p]){
+        if(i == f || i == son[p]) continue;
+        // 子树结点的 DFS 序构成一段连续区间
+        for(int j = l[i];j <= r[i];j++){
+            add(node[j]);
+        }
+    }
+    add(p);
+    ans[p] = colcnt;
+    if(!keep){
+        for(int i = l[p];i <= r[p];i++){
+            del(node[i]);
+        }
+    }
+}
+
+int main(){
+	ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+    ll n,m,q,u,v;
+    cin >> n;
+    for(int i = 2;i <= n;i++){
+        cin >> u >> v;
+        edge[u].push_back(v);
+        edge[v].push_back(u);
+    }
+    for(int i = 1;i <= n;i++){
+        cin >> col[i];
+    }
+    dfs(1,0);
+    dfs1(1,0,false);
+    cin >> q;
+    for(int i = 1;i <= q;i++){
+        cin >> u;
+        cout << ans[u] << "\n";
+    }
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{Prüfer 序列}
+Prüfer 序列可以将一个带标号$n$个结点的树用$[1,n]$中的 $n-2$个整数表示。
+
+在构造完 Prüfer 序列后原树中会剩下两个结点，其中一个一定是编号最大的点$n$。
+
+每个结点在序列中出现的次数是其度数减$1$(没有出现的就是叶结点).
+\begin{lstlisting}[caption={}]
+std::vector<int> treeToPrufer(int n,std::vector<int>& fa){
+	std::vector<int> prufer(1),du(n + 1,1);
+	for(int i = 1;i < n;i++) du[fa[i]]++;
+	for(int i = 1;i < n;i++){
+		int now = i;
+		while(du[now] == 1){
+			du[now] = 0,du[fa[now]]--;
+			prufer.push_back(fa[now]);
+			if(fa[now] > i) break;
+			now = fa[now];
+		}
+	}
+	return prufer;
+}
+
+std::vector<int> pruferToTree(int n,std::vector<int>& prufer){
+	std::vector<int> fa(n),du(n + 1);
+	for(int i = 1;i <= n - 2;i++) du[prufer[i]]++;
+	int j = 1,now = 1;
+	for(int i = 1;i < n && j <= n - 2;i++){
+		now = i;
+		while(du[now] == 0 && j <= n - 2){
+			fa[now] = prufer[j];
+			j++;
+			du[fa[now]]--;
+			if(fa[now] > i) break;
+			now = fa[now];
+		}
+	}
+	fa[now] = n;
+	return fa;
+}
+\end{lstlisting}
+相关结论：
+\begin{itemize}
+    \item 无向完全图的不同生成树数(凯莱公式):
+	
+    若该完全图有$n$个节点,则任意一个长度为$n - 2$的Prüfer序列都可以重构出其一棵生成树,且各不相同。
+    又因为Prüfer序列的值域在 $[1,n]$,故总数为$n^{n - 2}$。
+	\item $n$个点的有根树计数:
+	\item 
+		对每棵无根树来说，每个点都可能是根，故总数为$n^{n - 2} \times n = n ^ {n - 1}$。
+	\item $n$个点,每点度分别为$d_i$的无根树计数：
+	
+		总排列为$(n - 1)!$,即$A_{n - 2}^{n - 2}$。
+
+        其中数字$i$出现了$d_i - 1$ 次，故其重复的有$(d_i - 1)!$种排列，即$A_{d_i - 2}^{d_i - 2}$。
+
+        应当除去重复的，故总个数为 $\frac{(n - 2)!}{\prod_{i = 1}^{n}(d_i - 1)!}$
+    \item 一个 $n$ 个点 $m$ 条边的带标号无向图有 $k$ 个连通块。我们希望添加 $k-1$ 条边使得整个图连通，求方案数量.
+    
+    设 $s_i$ 表示每个连通块的数量，通项公式为 $\displaystyle n^{k-2}\cdot\prod_{i=1}^ks_i$ ，当 $k < 2$ 时答案为 $1$ 。
+\end{itemize}

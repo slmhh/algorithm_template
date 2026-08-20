@@ -1,0 +1,315 @@
+\section{组合数学}
+\subsection{全排列数(Full Permutation)}
+从 $n$ 个不同元素中,任取 $m(m\leq n,m$与 $n$ 均为自然数,下同)个元素按照一定的顺序排成一列,叫做从 $n$ 个不同元素中取出 $m$ 个元素的一个排列.
+
+\begin{itemize}
+    \item 通项公式: 
+			$$\mathrm A_n^m = \frac{n!}{(n - m)!}$$
+\end{itemize}
+
+\subsection{组合数(Combinatorial Number)}
+从$n$个不同元素中每次取出$m$个不同元素的所有组合个数,记作$C^m_n$或$\binom{n}{m}$;
+
+\begin{itemize}
+    \item 1.通项公式: 
+		$$C^m_n = \frac{P_n^m}{P_m} = \frac{n!}{m!(n - m)!},C^0_n = 1.$$
+	\item 2.递推式:
+		$$C^m_n = C_{n-1}^{m-1}+C^{n-1}_m$$
+	\item 3.对称性:
+		$$C^m_n = C^{n - m}_{n}$$
+\end{itemize}
+
+\subsection{错排列(derangement)}
+错位排列是没有任何元素出现在其有序位置的排列。即,对于 $1\sim n$ 的排列 P,如果满足 $P_i\neq i$,则称 $P$ 是 $n$ 的错位排列。
+
+\begin{itemize}
+    \item 1.通项公式:
+		$$D_n=n!-n!\sum_{k=1}^n\frac{(-1)^{k-1} }{k!}=n!\sum_{k=0}^n\frac{(-1)^k}{k!}$$
+		错位排列数列的前几项为 $0,1,2,9,44,265$(OEIS A000166)。
+	\item 2.递推式:
+			$$D_n=(n-1)(D_{n-1}+D_{n-2})$$
+			或
+			$$D_n=nD_{n-1}+{(-1)}^n$$
+\end{itemize}
+\begin{lstlisting}[caption={}]
+1, 0, 1, 2, 9, 44, 265, 1854, 14833, 133496, 1334961
+\end{lstlisting}
+
+\subsection{第一类斯特林数(Stirling Number)}
+第一类斯特林数(斯特林轮换数) 
+ $\begin{bmatrix}n\\ k\end{bmatrix}$,也可记做 $s(n,k)$,表示将 $n$ 个两两不同的元素,划分为 $k$ 个互不区分的非空轮换的方案数。
+
+\begin{itemize}
+    \item 递推式
+	$$\begin{bmatrix}n\\ k\end{bmatrix}=\begin{bmatrix}n-1\\ k-1\end{bmatrix}+(n-1)\begin{bmatrix}n-1\\ k\end{bmatrix}$$
+			边界是  $\begin{bmatrix}n\\ 0\end{bmatrix}=[n=0]$。
+    \item 结论
+    \begin{itemize}
+        \item $\begin{bmatrix}n\\ 1\end{bmatrix} = (n-1)!$
+        \item $\begin{bmatrix}n\\ n\end{bmatrix} = 1$
+        \item $\begin{bmatrix}n\\ n-1\end{bmatrix} = C_n^2$
+        \item $\begin{bmatrix}n\\ k\end{bmatrix} = (n-1)! \displaystyle\sum^{n-1}_{k=1}\frac{1}{k}=(n-1)!H_{n-1}$
+        \item $n! = \displaystyle\sum^n_{k = 0}\begin{bmatrix}n\\ k\end{bmatrix}$
+        \item $\begin{bmatrix}p\\ k\end{bmatrix} \equiv 0 \pmod(p)$
+        \item $\begin{bmatrix}p\\ k\end{bmatrix} \equiv(p-1)!\equiv -1 \pmod(p)$
+    \end{itemize}
+\end{itemize}
+\begin{lstlisting}[caption={}]
+0:   1
+1:   0,   1
+2:   0,   1,    1
+3:   0,   2,    3,     1
+4:   0,   6,   11,     6,      1
+5:   0,  24,   50,    35,     10,       1
+6:   0, 120,  274,   225,     85,      15,        1
+7:   0, 720, 1764,  1624,    735,     175,       21,         1
+8:   0,5040,13068, 13132,   6769,    1960,      322,        28,          1
+9:   0,40320,109584,118124, 67284,   22449,     4536,       546,        36,           1
+10:  0,362880,1026576,1172700,723680, 269325,    63273,      9450,       870,         45,            1
+\end{lstlisting}
+
+
+\subsection{第二类斯特林数(Stirling Number)}
+第二类斯特林数(斯特林子集数)$\begin{Bmatrix}n\\ k\end{Bmatrix}$,也可记做$ S(n,k)$,表示将 $n$ 个两两不同的元素,划分为 $k$ 个互不区分的非空子集的方案数。
+
+\begin{itemize}
+    \item 1.递推式
+		$$\begin{Bmatrix}n\\ k\end{Bmatrix}=\begin{Bmatrix}n-1\\ k-1\end{Bmatrix}+k\begin{Bmatrix}n-1\\ k\end{Bmatrix}$$
+		边界是$\begin{Bmatrix}n\\ 0\end{Bmatrix}=[n=0]$。
+	\item 2.通项公式
+		$$\begin{Bmatrix}n\\m\end{Bmatrix}=\sum\limits_{i=0}^m\dfrac{(-1)^{m-i}i^n}{i!(m-i)!}$$
+\end{itemize}
+\begin{lstlisting}[caption={}]
+0:   1
+1:   0, 1
+2:   0, 1,  1
+3:   0, 1,  3,   1
+4:   0, 1,  7,   6,    1
+5:   0, 1, 15,  25,   10,     1
+6:   0, 1, 31,  90,   65,    15,      1
+7:   0, 1, 63, 301,  350,   140,     21,       1
+8:   0, 1,127, 966, 1701,  1050,    266,      28,        1
+9:   0, 1,255,3025, 7770,  6951,   2646,     462,       36,         1
+10:  0, 1,511,9330,34105, 42525,  22827,    5880,      750,        45,          1
+\end{lstlisting}
+
+\subsection{卡特兰数(Catalan)}
+$Catalan$ 数列 $H_n$ 可以应用于以下问题：
+\begin{itemize}
+    \item 1.有 $2n$ 个人排成一行进入剧场。入场费 $5$ 元。其中只有 $n$ 个人有一张 $5$ 元钞票,另外 $n$ 人只有 $10$ 元钞票,剧院无其它钞票,问有多少种方法使得只要有 $10$ 元的人买票,售票处就有 $5$ 元的钞票找零？
+	\item 2.有一个大小为 $n\times n$ 的方格图左下角为 $(0, 0)$ 右上角为 $(n, n)$,从左下角开始每次都只能向右或者向上走一单位,不走到对角线 $y=x$ 上方(但可以触碰)的情况下到达右上角有多少可能的路径？
+	\item 3.在圆上选择 $2n$ 个点,将这些点成对连接起来使得所得到的 $n$ 条线段不相交的方法数？
+	\item 4.对角线不相交的情况下,将一个凸多边形区域分成三角形区域的方法数？
+	\item 5.一个栈(无穷大)的进栈序列为 $1,2,3, \cdots ,n$ 有多少个不同的出栈序列？
+	\item 6.$n$ 个结点可构造多少个不同的二叉树
+	\item 7.由 $n$ 个 $+1$ 和 $n$个 $-1$ 组成的 $2n$个数 $a_1,a_2, \cdots ,a_{2n}$,其部分和满足 $a_1+a_2+ \cdots +a_k \geq 0~(k=1,2,3, \cdots ,2n)$,有多少个满足条件的数列？
+\end{itemize}
+
+\begin{itemize}
+    \item 递推式:
+			$$H_n = \frac{\binom{2n}{n}}{n+1}(n \geq 2, n \in \mathbf{N_{+}})$$
+		边界是$\begin{Bmatrix}n\\ 0\end{Bmatrix}=[n=0]$。
+	\item 其他:
+		$$H_n = \begin{cases}
+		    \sum_{i=1}^{n} H_{i-1} H_{n-i} & n \geq 2, n \in \mathbf{N_{+}}\\
+		    1 & n = 0, 1
+		\end{cases}$$
+		 
+		$$H_n = \frac{H_{n-1} (4n-2)}{n+1}$$
+		
+		$$H_n = \binom{2n}{n} - \binom{2n}{n-1}$$
+\end{itemize}
+\begin{lstlisting}[caption={}]
+1, 1, 2, 5, 14, 42, 132, 429, 1430, 4862, 16796, 58786, 208012, 742900, 2674440
+\end{lstlisting}
+
+\subsection{伯努利数(Bernoulli)}
+伯努利数 $B_n$可以应用于自然数幂和公式问题：
+    $$\displaystyle \sum_{k=1}^{m} k^n = \frac{1}{n+1} \sum_{k=0}^{n} \binom{n+1}{k} B_k m^{n+1-k}$$
+
+\begin{itemize}
+    \item 生成函数定义：
+        $$\frac{x}{e^x-1} = \sum_{n=0}^{\infty} B_n \frac{x^n}{n!}$$
+    
+    \item 递推关系：
+        $$\sum_{k=0}^{m} \binom{m+1}{k} B_k = 0 \quad (m \geq 1)$$
+        边界条件为 $B_0 = 1$
+    
+    \item 显式公式：
+        $$B_n = \sum_{k=0}^{n} \frac{1}{k+1} \sum_{j=0}^{k} (-1)^j \binom{k}{j} j^n$$
+    
+    \item 前几个伯努利数：
+        \begin{align*}
+        & B_0 = 1, \quad B_1 = -\frac{1}{2}, \quad B_2 = \frac{1}{6}, \quad B_3 = 0, \\
+        & B_4 = -\frac{1}{30}, \quad B_5 = 0, \quad B_6 = \frac{1}{42}, \quad B_7 = 0
+        \end{align*}
+\end{itemize}
+
+
+\subsection{斐波那契数列(Fibonacci)}
+\begin{itemize}
+    \item 递推定义：
+        $$F_n = \begin{cases}
+            0 & n = 0 \\
+            1 & n = 1 \\
+            F_{n-1} + F_{n-2} & n \geq 2
+        \end{cases}$$
+    
+    \item 通项公式(比内公式)：
+        $$F_n = \frac{1}{\sqrt{5}} \left( \phi^n - \psi^n \right)$$
+        其中 $\phi = \frac{1+\sqrt{5}}{2}$,$\psi = \frac{1-\sqrt{5}}{2}$
+    
+    \item 矩阵形式：
+        $$\begin{pmatrix} F_{n+1} & F_n \\ F_n & F_{n-1} \end{pmatrix} = \begin{pmatrix} 1 & 1 \\ 1 & 0 \end{pmatrix}^n$$
+    
+    \item 生成函数：
+        $$\sum_{n=0}^{\infty} F_n x^n = \frac{x}{1-x-x^2}$$
+    
+    \item 直接结论：
+        \begin{itemize}
+            \item 卡西尼性质：$F_{n-1} * F_{n+1}-F_n^2=(-1)^n$ ;
+            \item $F_{n}^2+F_{n+1}^2=F_{2n+1}$ ;
+            \item $F_{n+1}^2-F_{n-1}^2=F_{2n}$ (由上一条写两遍相减得到);
+            \item 若存在序列 $a_0=1,a_n=a_{n-1}+a_{n-3}+a_{n-5}+...(n\ge 1)$ 则 $a_n=F_n(n\ge 1)$ 
+            \item 齐肯多夫定理：任何正整数都可以表示成若干个不连续的斐波那契数( $F_2$ 开始)可以用贪心实现。
+        \end{itemize}
+
+    \item 求和公式结论：
+        \begin{itemize}
+            \item 奇数项求和：$F_1+F_3+F_5+...+F_{2n-1}=F_{2n}$ ;
+            \item 偶数项求和：$F_2+F_4+F_6+...+F_{2n}=F_{2n+1}-1$ ;
+            \item 平方和：$F_1^2+F_2^2+F_3^2+...+F_n^2=F_n*F_{n+1}$ ;
+            \item $F_1+2F_2+3F_3+...+nF_n=nF_{n+2}-F_{n+3}+2$ ;
+            \item $-F_1+F_2-F_3+...+(-1)^nF_n=(-1)^n(F_{n+1}-F_n)+1$ ;
+            \item $F_{2n-2m-2}(F_{2n}+F_{2n+2})=F_{2m+2}+F_{4n-2m}$ 。
+        \end{itemize}
+
+    \item 数论结论：
+        \begin{itemize}
+            \item $F_a \mid F_b \Leftrightarrow a \mid b$ ;
+            \item $\gcd(F_a,F_b)=F_{\gcd(a,b)}$ ;
+            \item 当 $p$ 为 $5k\pm 1$ 型素数时,$\begin{cases} F_{p-1}\equiv 0\pmod p \\ F_p\equiv 1\pmod p \\ F_{p+1}\equiv 1\pmod p \end{cases}$ ;
+            \item 当 $p$ 为 $5k\pm 2$ 型素数时,$\begin{cases} F_{p-1}\equiv 1\pmod p \\ F_p\equiv -1\pmod p \\ F_{p+1}\equiv 0\pmod p \end{cases}$ ;
+            \item $F(n)\%m$ 的周期 $\le 6m$ ( $m=2\times 5^k$ 时取到等号);
+            \item 既是斐波那契数又是平方数的有且仅有 $1,144$ 。
+        \end{itemize}
+\end{itemize}
+\begin{lstlisting}[caption={}]
+0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610
+\end{lstlisting}
+
+\subsection{球盒模型}
+给定 $n$ 个小球 $m$ 个盒子。
+
+\begin{itemize}
+    \item 球同、盒不同、不能空:
+    
+    隔板法： $N$ 个球共 $N-1$ 个空,分成 $M$ 堆即 $M-1$ 个隔板,答案为 $\dbinom{n-1}{m-1}$ 。
+
+    \item 球同、盒不同、能空:
+    
+    隔板法：多出 $M-1$ 个虚空球,答案为 $\dbinom{m-1+n}{n}$ 。
+
+    \item 球同、盒同、能空:
+    
+    $\dfrac{1}{(1-x)(1-x^2)\dots(1-x^m)}$ 的 $x^n$ 项的系数。动态规划,答案为 
+
+    $$dp[i][j]=
+    \left\{\begin{matrix}
+    dp[i][j-1]+dp[i-j][j]     & i\geq j  \\ 
+    dp[i][j-1]                & i < j   \\ 
+    1                         & j==1 \ || \ i \leq 1
+    \end{matrix}\right.$$
+
+    \item 球同、盒同、不能空:
+    
+    $\dfrac{x^m}{(1-x)(1-x^2)\dots(1-x^m)}$ 的 $x^n$ 项的系数。动态规划,答案为 
+
+    $$dp[n][m]=
+    \left\{\begin{matrix}
+    dp[n-m][m]     & n\ge m  \\ 
+    0              & n < m   \\ 
+    \end{matrix}\right.$$
+
+    \item 球不同、盒同、不能空:
+    
+    第二类斯特林数 ${\tt Stirling2}(n,m)$ ,答案为  
+
+    $$dp[n][m]=
+    \left\{\begin{matrix}
+    m*dp[n-1][m]+dp[n-1][m-1] & 1 \le m < n\\ 
+    1                         & 0 \le n == m\\ 
+    0                         & m == 0 \& 1 \le n
+    \end{matrix}\right.$$
+
+    \item 球不同、盒同、能空:
+    
+    第二类斯特林数之和 $\displaystyle\sum_{i=1}^m{\tt Stirling2}(n,m)$ ,答案为 $\sum_{i = 0}^{m} dp[n][i]$ 。
+
+    \item 球不同、盒不同、不能空:
+    
+    第二类斯特林数乘上 $m$ 的阶乘 $m!\cdot{\tt Stirling2}(n,m)$ ,答案为 $dp[n][m] * m!$ 。
+
+    \item 球不同、盒不同、能空: 答案为 $m^n$ 。
+\end{itemize}
+
+\subsection{组合数结论}
+\begin{itemize}
+    \item 广义二项式定理: $\frac{1}{(1 - x)^n} = \sum \limits _{k = 0}^{\infty} C^{k - 1}_{n + k - 1} x^k$
+    \item $k  \cdot C^k_n=n \cdot C^{k-1}_{n-1}$ ;
+    \item $C_k^n \cdot C_m^k=C_m^n \cdot C_{m-n}^{m-k}$ ;
+    \item $C_n^k+C_n^{k+1}=C_{n+1}^{k+1}$ ;
+    \item $\displaystyle\sum_{i=0}^n C_n^i=2^n$ ;
+    \item $\displaystyle\sum^n_{i=0}C^i_n \cdot i = n \cdot 2^{n - 1}$
+    \item $\displaystyle\sum_{k=0}^n(-1)^k \cdot C_n^k=0$ 。
+    \item 二项式反演：$\left\{\begin{matrix} \displaystyle f_n=\sum_{i=0}^n{n\choose i}g_i\Leftrightarrow g_n=\sum_{i=0}^n(-1)^{n-i}{n\choose i}f_i \\ 
+                    \displaystyle f_k=\sum_{i=k}^n{i\choose k}g_i\Leftrightarrow g_k=\sum_{i=k}^n(-1)^{i-k}{i\choose k}f_i \end{matrix}\right. $ ;
+    \item $\displaystyle \sum_{i=1}^{n}i{n\choose i}=n  \cdot  2^{n-1}$ ;
+    \item $\displaystyle \sum_{i=1}^{n}i^2{n\choose i}=n \cdot (n+1) \cdot 2^{n-2}$ ;
+    \item $\displaystyle \sum_{i=1}^{n}\dfrac{1}{i}{n\choose i}=\sum_{i=1}^{n}\dfrac{1}{i}$ ;
+    \item $\displaystyle \sum_{i=0}^{n}{n\choose i}^2={2n\choose n}$ ;
+    \item 上指标求和：
+        \begin{itemize}
+            \item $\displaystyle  \sum_{k=0}^{m} \binom{n+k}{k} = \binom{n+m+1}{m}$ ;
+            \item $\displaystyle  \sum_{k=0}^{n} \binom{k}{m} = \binom{n+1}{m+1}$ 。
+        \end{itemize}
+    \item 拉格朗日恒等式：$\displaystyle \sum_{i=1}^{n}\sum_{j=i+1}^{n}(a_ib_j-a_jb_i)^2=(\sum_{i=1}^{n}a_i)^2(\sum_{i=1}^{n}b_i)^2-(\sum_{i=1}^{n}a_ib_i)^2$ 。
+    \item 范德蒙德卷积公式:在数量为 $n+m$ 的堆中选 $k$ 个元素,和分别在数量为 $n、m$ 的堆中选 $i、k-i$ 个元素的方案数是相同的,即$\displaystyle{\sum_{i=0}^k\binom{n}{i}\binom{m}{k-i}=\binom{n+m}{k}}$ ;
+        变体：
+        \begin{itemize}
+            \item $\displaystyle\sum_{i=0}^k C_{i+n}^{i}=C_{k+n+1}^{k}$ ;
+            \item $\displaystyle\sum_{i=0}^k C_{n}^{i} \cdot C_m^i=\sum_{i=0}^k C_{n}^{i} \cdot C_m^{m-i}=C_{n+m}^{n}$ 。
+        \end{itemize}
+    \item 二项式定理:$ (1+x)^n = \displaystyle\sum_{k=0}^{n} \binom{n}{k} x^k$
+    \item 朱世杰恒等式:  $\displaystyle\sum_{k=0}^{m} \binom{n+k}{k} = \binom{n+m+1}{m}$
+\end{itemize}
+
+
+
+\subsection{多项式与生成函数结论}
+\begin{itemize}
+    \item 求 $\displaystyle B_i = \sum_{k=i}^n C_k^iA_k$,即 $\displaystyle B_i=\dfrac{1}{i!}\sum_{k=i}^n\dfrac{1}{(k-i)!}\cdot k!A_k$,反转后卷积。
+    \item 遇到 $\displaystyle \sum_{i=0}^n[i\%k=0]f(i)$ 可以转换为 $\displaystyle \sum_{i=0}^n\dfrac 1 k\sum_{j=0}^{k-1}(\omega_k^i)^jf(i)$ (单位根卷积)
+    \item 广义二项式定理 $\displaystyle (1+x)^{\alpha}=\sum_{i=0}^{\infty}{n\choose \alpha}x^i$ 。
+    \item 普通生成函数：$A(x)=a_0+a_1x+a_2x^2+...=\langle a_0,a_1,a_2,...\rangle$ ;
+    \item $1+x^k+x^{2k}+...=\dfrac{1}{1-x^k}$ ;
+    \item $x+\dfrac{x^2}{2}+\dfrac{x^3}{3}+...=-\ln(1-x)$ ;
+    \item $1+x+x^2+...+x^{m-1}=\dfrac{1-x^m}{1-x}$ ;
+    \item $1+2x+3x^2+...=\dfrac{1}{(1-x)^2}$(借用导数,$nx^{n-1}=(x^n)$);
+    \item $C_m^0+C_m^1x+C_m^2x^2+...+C_m^mx^m=(1+x)^m$(二项式定理);
+    \item $C_m^0+C_{m+1}^1x^1+C_{m+2}^2x^2+...=\dfrac{1}{(1-x)^{m+1}}$(归纳法证明);
+    \item $\displaystyle\sum_{n=0}^{\infty}F_nx^n=\dfrac{(F_1-F_0)x+F_0}{1-x-x^2}$($F$为斐波那契数列,列方程 $G(x)=xG(x)+x^2G(x)+(F_1-F_0)x+F_0$);
+    \item $\displaystyle\sum_{n=0}^{\infty} H_nx^n=\dfrac{1-\sqrt{n-4x}}{2x}$($H$为卡特兰数);
+    \item 前缀和 $\displaystyle \sum_{n=0}^{\infty}s_nx^n=\dfrac{1}{1-x}f(x)$;
+    \item 五边形数定理：$\displaystyle \prod_{i=1}^{\infty}(1-x^i)=\sum_{k=0}^{\infty}(-1)^kx^{\frac 1 2k(3k\pm 1)}$ 。
+    \item 指数生成函数：$A(x)=a_0+a_1x+a_2\dfrac{x^2}{2!}+a_3\dfrac{x^3}{3!}+...=\langle a_0,a_1,a_2,a_3,...\rangle$ ;
+    \item 普通生成函数转换为指数生成函数：系数乘以 $n!$ ;
+    \item $1+x+\dfrac{x^2}{2!}+\dfrac{x^3}{3!}+...=\exp x$ ;
+    \item 长度为 $n$ 的循环置换数为 $P(x)=-\ln(1-x)$,长度为 n 的置换数为 $\exp P(x)=\dfrac{1}{1-x}$(注意是指数生成函数)
+    \item $n$ 个点的生成树个数是 $\displaystyle P(x)=\sum_{n=1}^{\infty}n^{n-2}\dfrac{x^n}{n!}$,n 个点的生成森林个数是 $\exp P(x)$ ;
+    \item $n$ 个点的无向连通图个数是 $P(x)$,n 个点的无向图个数是 $\displaystyle\exp P(x)=\sum_{n=0}^{\infty}2^{\frac 1 2 n(n-1)}\dfrac{x^n}{n!}$ ;
+    \item 长度为 $n(n\ge 2)$ 的循环置换数是 $P(x)=-\ln(1-x)-x$，长度为 $n$ 的错排数是 $\exp P(x)$ 。
+\end{itemize}
+
+
+

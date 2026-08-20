@@ -1,0 +1,99 @@
+\setsansfont{Consolas} % 设置英文字体
+\setmonofont[Mapping={}]{Consolas} % 英文引号之类的正常显示，相当于设置英文字体
+
+\linespread{1.2}
+
+\title{Template For XCPC}
+\author{slmhh @ HBUT}
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\pagestyle{fancy}
+
+% 取消分段首行缩进
+\setlength{\parindent}{0pt}
+
+% 减小标题前行间距
+\usepackage{titlesec}
+\titlespacing{\section}{0pt}{*0.5}{*0.5}
+\titlespacing{\subsection}{0pt}{*0.5}{*0.5}
+\titlespacing{\subsubsection}{0pt}{*0.5}{*0.5}
+
+\lhead{\CJKfamily{kai} Hubei University of Technology} %以下分别为左中右的页眉和页脚
+\chead{}
+
+% 调整页眉页脚的边距设置
+\fancyhfoffset[L]{0pt}  % 左边界偏移设为0
+\fancyhfoffset[R]{0pt}  % 右边界偏移设为0
+\rhead{\CJKfamily{kai} 第 \thepage 页}
+\lfoot{} 
+\cfoot{\thepage} % 页脚居中显示页号
+\rfoot{}
+% \renewcommand{\headrulewidth}{0.4pt} 
+% \renewcommand{\footrulewidth}{0.4pt}
+% 拉长页脚分割线长度
+\renewcommand{\footrule}{\hrule width \textwidth height 0.4pt}
+\renewcommand{\headrule}{\hrule width \textwidth height 0.4pt}
+
+%\geometry{left=2.5cm,right=3cm,top=2.5cm,bottom=2.5cm} % 页边距
+%\geometry{left=3.18cm,right=3.18cm,top=2.54cm,bottom=2.54cm} %页边距原始设置
+\geometry{left=1.5cm,right=1.0cm,top=2.0cm,bottom=1.0cm}
+% 如果需要调整页眉页脚与正文的间距，可以设置：
+\setlength{\headheight}{15pt}     % 页眉高度
+\setlength{\headsep}{10pt}        % 页眉与正文的间距
+\setlength{\footskip}{25pt}       % 页脚与正文的间距
+\setlength{\columnsep}{30pt}
+
+\makeatletter
+
+\makeatother
+
+\lstset{
+    language    = c++,
+    numbers     = left,
+    numberstyle={                               % 设置行号格式
+        \scriptsize                             % 字体大小
+        \color{black}
+        \fontspec{Consolas}
+    },
+	commentstyle = \color[RGB]{0,128,0}\bfseries, %代码注释的颜色
+	keywordstyle={                              % 设置关键字格式
+        \color[RGB]{40,40,255}
+        \fontspec{Consolas Bold}
+        \bfseries
+    },
+	stringstyle={                               % 设置字符串格式
+        \color[RGB]{128,0,0}
+        \fontspec{Consolas}
+        \bfseries
+    },
+	basicstyle={                                % 设置代码格式
+        \fontspec{Consolas}
+        \scriptsize 							% 字体大小
+		\ttfamily
+    },
+	emphstyle=\color[RGB]{112,64,160},          % 设置强调字格式
+    breaklines=true,                            % 设置自动换行
+    tabsize     = 4,
+    frame       = single,%主题
+    columns     = fullflexible,
+    rulesepcolor = \color{red!20!green!20!blue!20}, %设置边框的颜色
+    showstringspaces = false, %不显示代码字符串中间的空格标记
+	escapeinside={\%*}{*)},
+}
+
+
+%插入.cpp代码
+%\subsection{单调栈}
+%\begin{lstlisting}[caption={}]
+%插入代码
+%\end{lstlisting}
+
+
+%\title{ICPC Templates For Grooming}
+%\author {slmhh}
+%\maketitle
+%\tableofcontents
+
+\setcounter{tocdepth}{3} %目录不显示三级标题

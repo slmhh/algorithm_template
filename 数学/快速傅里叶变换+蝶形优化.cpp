@@ -14,11 +14,11 @@ void change(complex<double> A[],ll n){
 		if(i < R[i]) swap(A[i],A[R[i]]);
 }
 
-void FFT(complex<double> A[],ll n,int op){ //opÎªĞé²¿·ûºÅ£¬opÎª1Ê±FFT£¬opÎª-1Ê±IFFT
-	change(A,n); //Î»ÄæĞò±ä»»
-	for(int m = 2;m <= n;m <<= 1){  //Ã¶¾ÙÎ»¿í 
+void FFT(complex<double> A[],ll n,int op){ //opä¸ºè™šéƒ¨ç¬¦å·ï¼Œopä¸º1æ—¶FFTï¼Œopä¸º-1æ—¶IFFT
+	change(A,n); //ä½é€†åºå˜æ¢
+	for(int m = 2;m <= n;m <<= 1){  //æšä¸¾ä½å®½ 
 		complex<double> w1({cos(2 * pi / m),sin(2 * pi / m) * op});
-		for(int i = 0;i < n;i += m){  //Ã¶¾Ù¿éÊı 
+		for(int i = 0;i < n;i += m){  //æšä¸¾å—æ•° 
 			complex<double> wk({1,0});
 			for(int j = 0;j < m / 2;j++){
 				complex<double> x = A[i + j],y = A[i + j + m / 2] * wk;
@@ -36,11 +36,11 @@ int main(){
 	cin >> n >> m;
 	for(ll i = 0;i <= n;i++) cin >> f[i];
 	for(ll i = 0;i <= m;i++) cin >> g[i];
-	ll len = 1 << max((ll)ceil(log2(n + m)),1LL);  //FFTĞèÒªÏîÊıÎª2µÄÕûÊı´Î·½±¶,lenÎªµÚÒ»¸ö´óÓÚa.size() + b.size()µÄ¶şµÄÕıÕûÊı´Î·½
-	FFT(f,len,1),FFT(g,len,1);  //ÏµÊı±í´ï×ªµãÖµ±í´ï
+	ll len = 1 << max((ll)ceil(log2(n + m)),1LL);  //FFTéœ€è¦é¡¹æ•°ä¸º2çš„æ•´æ•°æ¬¡æ–¹å€,lenä¸ºç¬¬ä¸€ä¸ªå¤§äºa.size() + b.size()çš„äºŒçš„æ­£æ•´æ•°æ¬¡æ–¹
+	FFT(f,len,1),FFT(g,len,1);  //ç³»æ•°è¡¨è¾¾è½¬ç‚¹å€¼è¡¨è¾¾
 	for(int i = 0;i <= len;i++)
 		f[i] = f[i] * g[i];
-	FFT(f,len,-1);  //µãÖµ±í´ï×ªÏµÊı±í´ï
+	FFT(f,len,-1);  //ç‚¹å€¼è¡¨è¾¾è½¬ç³»æ•°è¡¨è¾¾
 	for(ll i = 0;i <= m + n;i++)
 		cout << (ll)(f[i].real() / len + 0.5) << " ";
 	return 0;

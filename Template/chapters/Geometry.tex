@@ -1,0 +1,420 @@
+
+\section{计算几何}
+\subsection{极角排序}
+\begin{lstlisting}[caption={}]
+#include<bits/stdc++.h>
+using i64 = long long;
+const double eps = 0,pi = acos(-1);
+struct node{
+    i64 x,y,idx;
+    double dge;
+};
+bool cmp(node a,node b){
+    return a.dge - b.dge < eps;
+}
+int main(){
+	std::ios::sync_with_stdio(0),std::cin.tie(0),std::cout.tie(0);
+    i64 n;std::cin >> n;
+    std::vector<node> a(n + 1);
+    for(int i = 1;i <= n;i++){
+        i64 x,y;std::cin >> x >> y;
+        a[i] = {x,y,i,atan2(x,y)};
+        if(a[i].dge < 0) a[i].dge += 2 * pi;
+    }
+    sort(a.begin() + 1,a.end(),cmp);
+    double ans = a[1].dge - a[n].dge;
+    ans += 2 * pi;
+    i64 idx1 = a[1].idx,idx2 = a[n].idx;
+    for(int i = 1;i < n;i++){
+        double temp = a[i + 1].dge - a[i].dge;
+        if(temp - ans < eps){
+            ans = temp;
+            idx1 = a[i + 1].idx,idx2 = a[i].idx;
+        } 
+    }
+    std::cout << idx1 << " " << idx2 << "\n";
+	return 0;
+}
+\end{lstlisting}
+
+\subsection{二维静态凸包(Andrew 算法)}
+$O(n \log n)$
+\begin{lstlisting}[caption={}]
+using Point = std::array<i64,2>;
+using Vector = std::array<i64,2>;
+Vector operator-(const Point& a,const Point& b){
+	return {a[0] - b[0],a[1] - b[1]};
+}
+i64 operator*(const Vector& a,const Vector& b){
+	return a[0] * b[1] - a[1] * b[0];
+}
+struct Convex{
+	//逆时针
+	std::vector<Point> points,convex;
+	void addPoint(i64 x,i64 y){
+		points.push_back({x,y});
+	}
+	void work(){
+		std::sort(points.begin(),points.end());
+		std::vector<int> stk;
+		stk.push_back(0);
+		for(int i = 1;i < points.size();i++){
+			int m = stk.size();
+			while(m >= 2 && (points[stk[m - 2]] - points[stk[m - 1]]) * (points[stk[m - 1]] - points[i]) <= 0){
+				m--;
+				stk.pop_back();
+			}
+			stk.push_back(i);
+		}
+		int temp = stk.size();
+		for(int i = points.size() - 1;i >= 0;i--){
+			int m = stk.size();
+			while(m > temp && (points[stk[m - 2]] - points[stk[m - 1]]) * (points[stk[m - 1]] - points[i]) <= 0){
+				m--;
+				stk.pop_back();
+			}
+			stk.push_back(i);
+		}
+		for(int i = 0;i < stk.size() - 1;i++){
+			if(i >= 1 && points[stk[i]] == points[stk[i - 1]]) continue;
+			convex.push_back(points[stk[i]]);
+		}
+	}
+};
+\end{lstlisting}
+
+
+
+
+\subsection{闵可夫斯基和}
+计算两个凸包合成的大凸包。
+\begin{lstlisting}[caption={}]
+template<class T> vector<Point<T>> mincowski(vector<Point<T>> P1, vector<Point<T>> P2) {
+    int n = P1.size(), m = P2.size();
+    vector<Point<T>> V1(n), V2(m);
+    for (int i = 0; i < n; i++) {
+        V1[i] = P1[(i + 1) % n] - P1[i];
+    }
+    for (int i = 0; i < m; i++) {
+        V2[i] = P2[(i + 1) % m] - P2[i];
+    }
+    vector<Point<T>> ans = {P1.front() + P2.front()};
+    int t = 0, i = 0, j = 0;
+    while (i < n && j < m) {
+        Point<T> val = sign(cross(V1[i], V2[j])) > 0 ? V1[i++] : V2[j++];
+        ans.push_back(ans.back() + val);
+    }
+    while (i < n) ans.push_back(ans.back() + V1[i++]);
+    while (j < m) ans.push_back(ans.back() + V2[j++]);
+    return ans;
+}
+\end{lstlisting}
+
+
+\subsection{平面最近点对}
+$O(n \log n)$
+\begin{lstlisting}[caption={}]
+struct CPOP{
+    using Point = std::array<i64,2>;
+    std::vector<Point> points;   
+    i64 minDist = 9e18;
+    Point p1,p2; 
+    i64 dist(Point p1,Point p2){
+        auto [x1,y1] = p1;
+        auto [x2,y2] = p2;
+        return (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
+    }
+    void addPoint(i64 x,i64 y){
+        points.push_back({x,y});
+    }
+    //0 idx 左闭右开
+    void work(i64 l,i64 r){
+        if(r - l == 1) return;
+        int mid = (l + r) >> 1;
+        i64 midx = points[mid][0];
+        work(l,mid),work(mid,r);
+
+        std::inplace_merge(points.begin() + l,points.begin() + mid,points.begin() + r,
+                        [&](Point a,Point b){return a[1] < b[1];});
+        
+        std::vector<Point> temp;
+        for(int i = l;i < r;i++){
+            if((points[i][0] - midx) * (points[i][0] - midx) < minDist) 
+                temp.push_back(points[i]);
+        }
+
+        for(int i = 0;i < temp.size();i++){
+            for(int j = i + 1;j < temp.size();j++){
+                if((temp[i][1] - temp[j][1]) * (temp[i][1] - temp[j][1]) >= minDist) break;
+                i64 d = dist(temp[i],temp[j]);
+                if(d < minDist){
+                    minDist = d;
+                    p1 = temp[i],p2 = temp[j];
+                }
+            }
+        }
+    }
+    void work(){
+        std::sort(points.begin(),points.end());
+        work(0,points.size());
+    }
+};
+\end{lstlisting}
+
+\subsection{扫描线}
+矩形面积并
+\begin{lstlisting}[caption={}]
+struct ScanLine{
+	std::vector<i64> cover,weight,num;
+	std::vector<std::array<i64,4>> side;
+	std::map<i64,i64> mp;
+	i64 n;
+	ScanLine(){};
+	ScanLine(i64 N):n(N),cover(N << 3),weight(N << 3),num((N << 1) + 1){}
+    void push_up(i64 p,i64 l,i64 r){
+        if(cover[p]) weight[p] = num[r] - num[l];
+		else if(l + 1 == r) weight[p] = 0;
+		else weight[p] = weight[(p << 1) | 1] + weight[p << 1];
+    }
+    void update(i64 l,i64 r,i64 c,i64 s,i64 t,i64 p){
+        if(l <= s && t <= r){
+            cover[p] += c;
+			push_up(p,s,t);
+            return;
+        }
+		if(s + 1 == t) return ;
+        i64 m = s + ((t - s) >> 1);
+        if(l <= m) update(l,r,c,s,m,p << 1);
+        if(r > m) update(l,r,c,m,t,(p << 1) | 1);
+        push_up(p,s,t);
+    }
+	void addRectangle(i64 x1,i64 y1,i64 x2,i64 y2){
+		side.push_back({x1,y1,y2,1});
+		side.push_back({x2,y1,y2,-1});
+		mp[y1]++,mp[y2]++;
+	}
+	i64 run(){
+		i64 res = 0,idx = 0;
+		for(auto& i : mp){
+			i.second = ++idx;
+			num[idx] = i.first;
+		}
+		sort(side.begin(),side.end());
+		update(mp[side[0][1]],mp[side[0][2]],1,1,2 * n,1);
+		for(int i = 1;i < side.size();i++){
+			auto [x,y1,y2,tag] = side[i];
+			res += (x - side[i - 1][0]) * weight[1];
+			update(mp[y1],mp[y2],tag,1,2 * n,1);
+		}
+		return res;
+	}
+};
+
+int main(){
+	std::ios::sync_with_stdio(0),std::cin.tie(0),std::cout.tie(0);
+	i64 n;
+	std::cin >> n;
+	ScanLine sl(n);
+	for(int i = 1;i <= n;i++){
+		i64 x1,y1,x2,y2;
+		std::cin >> x1 >> y1 >> x2 >> y2;
+		sl.addRectangle(x1,y1,x2,y2);
+	}
+	std::cout << sl.run() << "\n";
+	return 0;
+}
+\end{lstlisting}
+
+\subsection{平面最远点对(旋转卡壳)}
+$O(N)$,需要凸包
+\begin{lstlisting}[caption={}]
+using Point = std::array<i64,2>;
+using Vector = std::array<i64,2>;
+Vector operator-(const Point& a,const Point& b){
+	return {a[0] - b[0],a[1] - b[1]};
+}
+i64 operator*(const Vector& a,const Vector& b){
+	return a[0] * b[1] - a[1] * b[0];
+}
+//Furthest Pair of Points O(N)
+i64 FPOP(std::vector<Point>& points){
+	i64 j = 0,ans = 0,m = points.size();
+	if(m == 1) return 0;
+	else if(m == 2) return dist(points[0],points[1]);
+	for(int i = 0;i < m;i++){ //需要枚举边而不是点
+		int las = i == 0 ? m - 1 : i - 1;
+		//通过叉乘算三角形面积来替代点到直线距离
+		while(std::abs((points[las] - points[j]) * (points[las] - points[i])) <=
+			std::abs((points[las] - points[(j + 1) % m]) * (points[las] - points[i]))) j = (j + 1) % m;
+		ans = std::max({ans,dist(points[j],points[i]),dist(points[j],points[las])});
+	}
+	return ans;
+}
+\end{lstlisting}
+
+\subsection{最小矩形覆盖(旋转卡壳)}
+$O(N)$,需要凸包
+\begin{lstlisting}[caption={}]
+i64 MRC(std::vector<Point>& points){
+	i64 j = 1,l = 0,r = 0,ans = 1e18,m = points.size();
+	if(m <= 2) return 0;
+	for(int i = 0;i < m;i++){ //需要枚举边而不是点
+		int las = i == 0 ? m - 1 : i - 1;
+		//通过叉乘算三角形面积来替代点到直线距离
+		while(std::abs((points[las] - points[j]) * (points[las] - points[i])) <=
+			std::abs((points[las] - points[(j + 1) % m]) * (points[las] - points[i]))) j = (j + 1) % m;
+		//通过点乘投影来判断长度
+		while(((points[i] - points[las]) ^ (points[r] - points[las])) <=
+			((points[i] - points[las]) ^ (points[(r + 1) % m] - points[las]))) r = (r + 1) % m;
+		if(i == 0) l = r;
+		while(((points[las] - points[i]) ^ (points[l] - points[i])) <=
+			((points[las] - points[i]) ^ (points[(l + 1) % m] - points[i]))) l = (l + 1) % m;
+
+		i64 t1 = std::abs((points[las] - points[j]) * (points[i] - points[j]));
+		i64 t2 = std::abs((points[r] - points[las]) ^ (points[i] - points[las])) + 
+				 std::abs((points[l] - points[i]) ^ (points[las] - points[i]));
+		i64 t3 = std::abs((points[las] - points[i]) ^ (points[las] - points[i]));
+		ans = std::min<i64>(ans,(__int128)t1 * (t2 - t3) / t3);
+	}
+	return ans;
+}
+\end{lstlisting}
+
+\subsection{最小圆覆盖}
+期望$O(N)$,最坏$O(h^3 n)$
+\begin{lstlisting}[caption={}]
+#include<bits/stdc++.h>
+using i64 = long long;
+std::mt19937 rng(std::chrono::steady_clock::now().time_since_epoch().count());
+static constexpr double eps = 1e-9;
+using Point = std::array<double,2>;
+
+double dist(Point& a,Point& b){
+	return std::sqrt((a[0] - b[0]) * (a[0] - b[0]) + (a[1] - b[1]) * (a[1] - b[1]));
+}
+
+struct SEC{
+	std::vector<Point> points;
+	double r = 0;
+	Point o{};
+	void addPoint(double x,double y){
+		points.push_back({x,y});
+	}
+
+	void update(Point& x,Point& y){
+		o[0] = (x[0] + y[0]) / 2;
+		o[1] = (x[1] + y[1]) / 2;
+		r = dist(x,y) / 2;
+	}
+
+	Point geto(Point a,Point b,Point c){
+		double a1,a2,b1,b2,c1,c2;
+		Point res;
+		a1 = 2 * (b[0] - a[0]), b1 = 2 * (b[1] - a[1]),
+		c1 = b[0] * b[0] - a[0] * a[0] + b[1] * b[1] - a[1] * a[1];
+		a2 = 2 * (c[0] - a[0]), b2 = 2 * (c[1] - a[1]),
+		c2 = c[0] * c[0] - a[0] * a[0] + c[1] * c[1] - a[1] * a[1];
+		if(std::fabs(a1) <= eps){
+			res[1] = c1 / b1;
+			res[0] = (c2 - res[1] * b2) / a2;
+		}
+		else if(std::fabs(b1) <= eps){
+			res[0] = c1 / a1;
+			res[1] = (c2 - res[0] * a2) / b2;
+		}
+		else{
+			res[0] = (c2 * b1 - c1 * b2) / (a2 * b1 - a1 * b2);
+			res[1] = (c2 * a1 - c1 * a2) / (b2 * a1 - b1 * a2);
+		}
+		return res;
+	}
+
+	void work(){
+		int n = points.size();
+		for(int i = 0;i < n;i++) std::swap(points[rng() % n],points[rng() % n]);
+		o = points[0];
+		for(int i = 0;i < n;i++){
+			if(dist(o,points[i]) - r < eps) continue;
+			update(points[i],points[0]);
+			for(int j = 0;j < i;j++){
+				if(dist(o,points[j]) - r < eps) continue;
+				update(points[i],points[j]);
+				for(int k = 0;k < j;k++){
+					if(dist(o,points[k]) - r < eps) continue;
+					o = geto(points[i],points[j],points[k]);
+					r = dist(o,points[i]);	
+				}
+			}
+		}
+	}
+};
+
+int main(){
+	std::ios::sync_with_stdio(0),std::cin.tie(0),std::cout.tie(0);
+	int n;
+	std::cin >> n;
+	SEC circ;
+	for(int i = 1;i <= n;i++){
+		double x,y;
+		std::cin >> x >> y;
+		circ.addPoint(x,y);
+	}
+	circ.work();
+	std::cout << std::fixed << std::setprecision(10) << circ.r << "\n" << circ.o[0] << " " << circ.o[1] << "\n";
+	return 0;
+}
+\end{lstlisting}
+
+
+
+\subsection{半平面交}
+计算多条直线左边平面部分的交集。
+\begin{lstlisting}[caption={}]
+template<class T> vector<Point<T>> halfcut(vector<Line<T>> lines) {
+    sort(lines.begin(), lines.end(), [&](auto l1, auto l2) {
+        auto d1 = l1.b - l1.a;
+        auto d2 = l2.b - l2.a;
+        if (sign(d1) != sign(d2)) {
+            return sign(d1) == 1;
+        }
+        return cross(d1, d2) > 0;
+    });
+    deque<Line<T>> ls;
+    deque<Point<T>> ps;
+    for (auto l : lines) {
+        if (ls.empty()) {
+            ls.push_back(l);
+            continue;
+        }
+        while (!ps.empty() && !pointOnLineLeft(ps.back(), l)) {
+            ps.pop_back();
+            ls.pop_back();
+        }
+        while (!ps.empty() && !pointOnLineLeft(ps[0], l)) {
+            ps.pop_front();
+            ls.pop_front();
+        }
+        if (cross(l.b - l.a, ls.back().b - ls.back().a) == 0) {
+            if (dot(l.b - l.a, ls.back().b - ls.back().a) > 0) {
+                if (!pointOnLineLeft(ls.back().a, l)) {
+                    assert(ls.size() == 1);
+                    ls[0] = l;
+                }
+                continue;
+            }
+            return {};
+        }
+        ps.push_back(lineIntersection(ls.back(), l));
+        ls.push_back(l);
+    }
+    while (!ps.empty() && !pointOnLineLeft(ps.back(), ls[0])) {
+        ps.pop_back();
+        ls.pop_back();
+    }
+    if (ls.size() <= 2) {
+        return {};
+    }
+    ps.push_back(lineIntersection(ls[0], ls.back()));
+    return vector(ps.begin(), ps.end());
+}
+\end{lstlisting}

@@ -1,2 +1,7 @@
 *.exe
 .cph/
+*.log
+*.aux
+*.out
+*.gz
+*.toc

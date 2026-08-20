@@ -1,0 +1,207 @@
+\section{C++语法}
+\subsection{int128}
+\begin{lstlisting}[caption={}]
+using i128 = __int128;
+
+i128 to_128(string a){
+    i128 res = 0;
+    for(int i = a.size() - 1;i >= 0;i--){
+        res = res * 10 + a[i] - '0';
+    }
+    return res;
+}
+
+std::ostream &operator<<(std::ostream &os, i128 n) {
+    std::string s;
+    if(n == 0) s = "0";
+    while (n) {
+        s += '0' + n % 10;
+        n /= 10;
+    }
+    std::reverse(s.begin(), s.end());
+    return os << s;
+}
+\end{lstlisting}
+
+\subsection{随机数}
+\begin{lstlisting}[caption={}]
+std::mt19937_64 rng {std::chrono::steady_clock::now().time_since_epoch().count()};
+a = rng(); //调用
+shuffle(a.begin(),a.end(),rng()); //打乱数组
+\end{lstlisting}
+
+\subsection{手工哈希}
+\begin{lstlisting}[caption={}]
+struct myhash {
+    static uint64_t hash(uint64_t x) {
+        x += 0x9e3779b97f4a7c15;
+        x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9;
+        x = (x ^ (x >> 27)) * 0x94d049bb133111eb;
+        return x ^ (x >> 31);
+    }
+    size_t operator()(uint64_t x) const {
+        static const uint64_t SEED = chrono::steady_clock::now().time_since_epoch().count();
+        return hash(x + SEED);
+    }
+    size_t operator()(pair<uint64_t, uint64_t> x) const {
+        static const uint64_t SEED = chrono::steady_clock::now().time_since_epoch().count();
+        return hash(x.first + SEED) ^ (hash(x.second + SEED) >> 1);
+    }
+};
+// unordered_map<int, int, myhash>
+\end{lstlisting}
+
+\subsection{速度测试}
+\begin{lstlisting}[caption={}]
+// #pragma GCC optimize("Ofast", "unroll-loops")
+mt19937 rnd(chrono::steady_clock::now().time_since_epoch().count());
+signed main() {
+    size_t n = 340000000, seed = 0;
+    for (int i = 1; i <= n; i++) {
+        seed ^= rnd();
+    }
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{读取一行数字，个数未知}
+\begin{lstlisting}[caption={}]
+string s;
+getline(cin, s);
+stringstream ss;
+ss << s;
+while (ss >> s) {
+    auto res = stoi(s);
+    cout << res * 100 << endl;
+}
+\end{lstlisting}
+
+\subsection{输出流控制}
+\begin{lstlisting}[caption={}]
+#include<iomanip>
+void Solve() {
+    cout << setw(12) << 314 << endl; //设置字段宽度,默认用空格补全。
+    cout << setw(12) << setfill('*') << 314 << endl; //设置填充字符,注意这里的x只能为char类型。
+    cout << oct << 314 << endl; //八进制输出,输入同理
+    cout << dec << 314 << endl; //十进制
+    cout << hex << 314 << endl; //十六进制
+    cout << setbase(12) << 314 << endl; //自定义进制,输入同理
+	cout << fixed << setprecision(10) << 3.14 << endl; //精度控制
+}
+\end{lstlisting}
+
+\subsection{查找后继}
+$lower$ 表示 $\ge$ ,$upper$ 表示 $>$ 。使用前记得 先进行排序。
+\begin{lstlisting}[caption={}]
+//返回a数组[start,end)区间中第一个>=x的地址【地址!!!】
+cout << lower_bound(a + start, a + end, x);
+cout << lower_bound(a, a + n, x) - a; //在a数组中查找第一个>=x的元素下标
+upper_bound(a, a + n, k) - lower_bound(a, a + n, k) //查找k在a中出现了几次
+\end{lstlisting}
+
+\subsection{bit 库与位运算函数}
+对$longlong$操作只需要在函数后面加上$ll$即可(例如$\_\_builtin\_popcountll(x)$)
+\begin{lstlisting}[caption={}]
+__builtin_popcount(x) // 返回x二进制下含1的数量,例如x=15=(1111)时答案为4
+__builtin_ffs(x) // 返回x右数第一个1的位置(1-idx),1(1) 返回 1,8(1000) 返回 4,26(11010) 返回 2
+__builtin_ctz(x) // 返回x二进制下后导0的个数,1(1) 返回 0,8(1000) 返回 3
+bit_width(x) // 返回x二进制下的位数,9(1001) 返回 4,26(11010) 返回 5
+\end{lstlisting}
+
+\subsection{优先队列}
+默认升序(大根堆),自定义排序需要重载 $<$ 。
+\begin{lstlisting}[caption={}]
+//重载运算符【注意，符号相反！！！】
+struct Node {
+    int x; string s;
+    friend bool operator < (const Node &a, const Node &b) {
+        if (a.x != b.x) return a.x > b.x;
+        return a.s > b.s;
+    }
+};
+\end{lstlisting}
+
+\subsection{bitset}
+将数据转换为二进制，从高位到低位排序，以 $0$ 为最低位。当位数相同时支持全部的位运算。
+\begin{lstlisting}[caption={}]
+// 如果输入的是01字符串,可以直接使用">>"读入
+bitset<10> s;
+cin >> s;
+
+//使用只含01的字符串构造——bitset<容器长度>B (字符串)
+string S; cin >> S;
+bitset<32> B (S);
+
+//使用整数构造（两种方式）
+int x; cin >> x;
+bitset<32> B1 (x);
+bitset<32> B2 = x;
+
+// 构造时,尖括号里的数字不能是变量
+int x; cin >> x;
+bitset<x> ans; // 错误构造
+
+[] //随机访问
+set(x) //将第x位置1,x省略时默认全部位置1
+reset(x) //将第x位置0,x省略时默认全部位置0
+flip(x) //将第x位取反,x省略时默认全部位取反
+to_ullong() //重转换为ULL类型
+to_string() //重转换为ULL类型
+count() //返回1的个数
+any() //判断是否至少有一个1
+none() //判断是否全为0
+
+_Find_fisrt() // 找到从低位到高位第一个1的位置
+_Find_next(x) // 找到当前位置x的下一个1的位置,复杂度 O(n/w + count)
+
+bitset<23> B1("11101001"), B2("11101000");
+cout << (B1 ^ B2) << "\n";  //按位异或
+cout << (B1 | B2) << "\n";  //按位或
+cout << (B1 & B2) << "\n";  //按位与
+cout << (B1 == B2) << "\n"; //比较是否相等
+cout << B1 << " " << B2 << "\n"; //你可以直接使用cout输出
+\end{lstlisting}
+
+\subsection{使用构造函数}
+将一些必要的声明和预处理放在构造函数，在编译时，无论放置在程序的哪个位置，都会先于主函数进行。
+\begin{lstlisting}[caption={}]
+int __FAST_IO__ = []() { // 函数名称可以随意修改
+    ios::sync_with_stdio(0), cin.tie(0);
+    cout.tie(0);
+    cout << fixed << setprecision(12);
+    freopen("out.txt", "r", stdin);
+    freopen("in.txt", "w", stdout);
+    return 0;
+}();
+\end{lstlisting}
+
+\subsection{其他}
+\begin{lstlisting}[caption={}]
+shuffle(ver.begin(), ver.end(), rnd); //数组打乱
+iota(ver.begin(), ver.end(), x); //将ver区间复制成“x,x+1,x+2,…”
+ver.erase(unique(ver.begin(),ver.end()),ver.end()); //数组去重+删除
+next_permutation(ver.begin(), ver.end()); //字典序全排列(prev_permutation()为逆序)
+is_sorted(ver.begin(), ver.end()); //ver区间是否是非递减的,返回bool型
+accumulate(a + start, a + end, x); //累加，并输出累加和+x(注意longlong)的值
+
+string to_string(T val); //数字转字符串
+str.find(c); //字符串中查找子字符串或字符的第一个出现位置。如果找不到,则返回string::npos。
+s.find(str, pos);//从位置pos开始查找子字符串str。
+s.find_first_of(str);//查找字符串s中第一个出现在字符串str中的字符的位置。
+s.find_last_of(str);//查找字符串s中最后一个出现在字符串str中的字符的位置
+
+exp2(x); //2^x
+log2(x); //\log_2(x)
+
+prev(it) / next(it); //默认返回迭代器it的前/后一个迭代器
+prev(it, 2) / next(it, 2); //可选参数可以控制返回前/后任意个迭代器
+\end{lstlisting}
+
+
+\subsection{编译器设置}
+\begin{lstlisting}[caption={}]
+g++ -O2 -std=c++20 -pipe 
+-Wall -Wextra -Wconversion /* 这部分是警告相关，可能用不到 */
+-fstack-protector 
+-Wl,--stack=268435456
+\end{lstlisting}

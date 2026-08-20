@@ -1,0 +1,509 @@
+\section{杂项}
+\subsection{动态大小bitset}
+\begin{lstlisting}[caption={}]
+template<int N>
+void solve(int n){
+    while(N <= n){
+        solve<std::min(N << 1,max_N)>(n);
+        return 0;
+    }
+    std::bitset<N> st;
+}
+\end{lstlisting}
+
+\subsection{Gosper's Hack}
+生成$n$元集合所有$k$元子集的算法,只会遍历$C_n^k$种情况。
+\begin{lstlisting}[caption={}]
+void GospersHack(int k, int n){
+    int cur = (1 << k) - 1;
+    int limit = (1 << n);
+    while (cur < limit && cur){
+        // do something
+        int lb = cur & -cur;
+        int r = cur + lb;
+        cur = ((r ^ cur) >> __builtin_ctz(lb) + 2) | r;
+        // 或：cur = (((r ^ cur) >> 2) / lb) | r;
+    }
+}
+\end{lstlisting}
+
+\subsection{绝对众数}
+\subsubsection{摩尔投票}
+选出$1$个候选人，要求这个人的得票都超过总票数的一半 
+\begin{lstlisting}[caption={}]
+int m = 0,cnt = 0;
+for(int i = 0;i < n;i++){
+    if(cnt == 0) m = nums[i];
+    if(m == nums[i]) cnt++;
+    else cnt--;
+}
+// 最后需要验证答案是否符合要求
+\end{lstlisting}
+
+\subsubsection{拓展摩尔投票}
+选出$N$个候选人，要求这个人的得票都超过总票数的$\frac{1}{N + 1}$
+\begin{lstlisting}[caption={}]
+int m[N],cnt[N];
+for(auto e : nums){
+    int i = find(m, m + N, e) - m;
+    if(i != N){ // 如果当前票投给了候选人之一
+        cnt[i]++;
+        continue;
+    }
+    int j = find(cnt, cnt + N, 0) - cnt;
+    if(j != N){ // 如果当前存在一个位置"虚位以待"
+        m[j] = e;
+        cnt[j] = 1;
+        continue;
+    }
+    for(auto &c : cnt) c--;
+}
+// 最后需要验证答案是否符合要求
+\end{lstlisting}
+
+\subsubsection{区间绝对众数(线段树上摩尔投票)}
+当绝对众数存在时，可以任意交换摩尔投票的计票顺序，而不改变选出的候选人。
+在合并左右两个区间时，相当于是先对左右两边分别进行摩尔投票，再对两边抵消后的结果进行摩尔投票。
+\begin{lstlisting}[caption={}]
+struct Node{
+    int m,cnt;
+    Node operator+(const Node &o) const{
+        if (m == o.m) return {m, cnt + o.cnt};
+        else if (cnt > o.cnt) return {m, cnt - o.cnt};
+        return {o.m, o.cnt - cnt};
+    }
+};
+// 最后需要验证答案是否符合要求
+// vector<int> pos[MAXV];
+// pos[m]表示权值m的下标数组，需要预处理
+// 如果权值值域过大，需要改用map或哈希表
+auto itr = upper_bound(pos[m].begin(), pos[m].end(), right);
+auto itl = lower_bound(pos[m].begin(), pos[m].end(), left);
+if (itr - itl > (right - left + 1) / 3)
+    return m;
+else
+    return -1;
+\end{lstlisting}
+
+\subsection{模拟退火}
+\begin{lstlisting}[caption={}]
+using point = std::array<double, 2>;
+using pointW = std::array<double, 3>;
+const double T0 = 10000.0; //初始温度
+const double q = 0.98; //退火系数
+const int L = 100; //每次迭代次数
+std::mt19937_64 rng{std::chrono::steady_clock::now().time_since_epoch().count()};
+std::uniform_real_distribution<double> rnd(-1.0, 1.0);
+point Point{}, bestPoint{};
+double best = 1e18;
+std::vector<pointW> points;
+double dist(const point &a, const pointW &b) {
+    return sqrtl((a[0] - b[0]) * (a[0] - b[0]) + (a[1] - b[1]) * (a[1] - b[1])) * b[2];
+}
+double calc(const point &p) {
+    double res = 0;
+    for (int i = 0; i < (int)points.size(); i++)
+        res = std::max(res, dist(p, points[i]));
+    return res;
+}
+void get_new(point &p, double T) {
+    p[0] += rnd(rng) * T;
+    p[1] += rnd(rng) * T;
+}
+void codeFire() {
+    double T = T0,las = best;
+    while(T > 1e-6){
+        for(int i = 0; i < L; i++){
+            point temp = Point;
+            get_new(temp, T);
+            double now = calc(temp);
+            double DE = now - las;
+            if(DE < 0 || exp(-DE / T) > ((rng() % 1000000) / 1000000.0)){
+                Point = temp;
+                las = now;
+                if(now < best){
+                    best = now;
+                    bestPoint = Point;
+                }
+            }
+        }
+        T *= q;
+    }
+}
+int main() {
+    std::ios::sync_with_stdio(0),std::cin.tie(0),std::cout.tie(0);
+    int n;
+    std::cin >> n;
+    points.resize(n);
+    for (int i = 0; i < n; i++) {
+        double x, y, c;
+        std::cin >> x >> y >> c;
+        points[i] = {x,y,c};
+        Point[0] += x,Point[1] += y;
+    }
+    Point[0] /= n,Point[1] /= n;
+
+    best = calc(Point);
+    bestPoint = Point;
+    codeFire();
+    std::cout << std::fixed << std::setprecision(10) << best << "\n";
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{莫队}
+以 $\mathcal O(N \sqrt N)$ 的复杂度完成 $Q$ 次询问的离线查询,
+其中每个分块的大小取 $\sqrt N=\sqrt {10^5} = 317$ ,
+也可以使用$n / min<int>(n, sqrt(q))$、 $ceil((double)n / (int)sqrt(n))$或者$sqrt(n)$划分。
+\begin{lstlisting}[caption={}]
+signed main() {
+    int n;
+    cin >> n;
+    vector<int> w(n + 1);
+    for (int i = 1; i <= n; i++) {
+        cin >> w[i];
+    }
+    
+    int q;
+    cin >> q;
+    vector<array<int, 3>> query(q + 1);
+    for (int i = 1; i <= q; i++) {
+        int l, r;
+        cin >> l >> r;
+        query[i] = {l, r, i};
+    }
+    
+    int Knum = n / min<int>(n, sqrt(q)); // 计算块长
+    vector<int> K(n + 1);
+    for (int i = 1; i <= n; i++) { // 固定块长
+        K[i] = (i - 1) / Knum + 1;
+    }
+    sort(query.begin() + 1, query.end(), [&](auto x, auto y) {
+        if (K[x[0]] != K[y[0]]) return x[0] < y[0];
+        if (K[x[0]] & 1) return x[1] < y[1];
+        return x[1] > y[1];
+    });
+    
+    int l = 1, r = 0, val = 0;
+    vector<int> ans(q + 1);
+    for (int i = 1; i <= q; i++) {
+        auto [ql, qr, id] = query[i];
+        auto add = [&](int x) -> void {};
+        auto del = [&](int x) -> void {};
+        while (l > ql) add(w[--l]);
+        while (r < qr) add(w[++r]);
+        while (l < ql) del(w[l++]);
+        while (r > qr) del(w[r--]);
+        ans[id] = val;
+    }
+    for (int i = 1; i <= q; i++) {
+        cout << ans[i] << endl;
+    }
+}
+\end{lstlisting}
+
+需要注意的是，在普通莫队中，$K$ 数组的作用是根据左边界的值进行排序，当询问次数很少时（$q \ll n$），可以直接合并到 $query$ 数组中。
+\begin{lstlisting}[caption={}]
+vector<array<int, 4>> query(q);
+for (int i = 1; i <= q; i++) {
+    int l, r;
+    cin >> l >> r;
+    query[i] = {l, r, i, (l - 1) / Knum + 1}; // 合并
+}
+sort(query.begin() + 1, query.end(), [&](auto x, auto y) {
+    if (x[3] != y[3]) return x[3] < y[3];
+    if (x[3] & 1) return x[1] < y[1];
+    return x[1] > y[1];
+});
+\end{lstlisting}
+
+
+\subsection{带修莫队}
+以 $\mathcal O(N^\frac{5}{3})$ 的复杂度完成 $Q$ 次询问的离线查询，
+其中每个分块的大小取 $N^\frac{2}{3}=\sqrt[3]{100000^2}=2154$ （直接取会略快），
+也可以使用$pow(n, 0.6666)$划分。
+\begin{lstlisting}[caption={}]
+signed main() {
+    int n, q;
+    cin >> n >> q;
+    vector<int> w(n + 1);
+    for (int i = 1; i <= n; i++) {
+        cin >> w[i];
+    }
+    vector<array<int, 4>> query = {{}}; // {左区间, 右区间, 累计修改次数, 下标}
+    vector<array<int, 2>> modify = {{}}; // {修改的值, 修改的元素下标}
+    for (int i = 1; i <= q; i++) {
+        char op;
+        cin >> op;
+        if (op == 'Q') {
+            int l, r;
+            cin >> l >> r;
+            query.push_back({l, r, (int)modify.size() - 1, (int)query.size()});
+        } else {
+            int idx, w;
+            cin >> idx >> w;
+            modify.push_back({w, idx});
+        }
+    }
+    
+    int Knum = 2154; // 计算块长
+    vector<int> K(n + 1);
+    for (int i = 1; i <= n; i++) { // 固定块长
+        K[i] = (i - 1) / Knum + 1;
+    }
+    sort(query.begin() + 1, query.end(), [&](auto x, auto y) {
+        if (K[x[0]] != K[y[0]]) return x[0] < y[0];
+        if (K[x[1]] != K[y[1]]) return x[1] < y[1];
+        return x[3] < y[3];
+    });
+    
+    int l = 1, r = 0, val = 0;
+    int t = 0; // 累计修改次数
+    vector<int> ans(query.size());
+    for (int i = 1; i < query.size(); i++) {
+        auto [ql, qr, qt, id] = query[i];
+        auto add = [&](int x) -> void {};
+        auto del = [&](int x) -> void {};
+        auto time = [&](int x, int l, int r) -> void {};
+        while (l > ql) add(w[--l]);
+        while (r < qr) add(w[++r]);
+        while (l < ql) del(w[l++]);
+        while (r > qr) del(w[r--]);
+        while (t < qt) time(++t, ql, qr);
+        while (t > qt) time(t--, ql, qr);
+        ans[id] = val;
+    }
+    for (int i = 1; i < ans.size(); i++) {
+        cout << ans[i] << endl;
+    }
+}
+\end{lstlisting}
+
+\subsection{幻方}
+构造题用,其有一些性质(保证$N$为奇数)：$1$ 到 $N^2$
+每个数字恰好使用一次,且每行、每列及两条对角线上的数字之和都相同,且为奇数。
+
+构造方式：将 $1$写在第一行的中间,随后不断向右上角位置填下一个数字,直到填满。
+\begin{lstlisting}[caption={}]
+int n;
+cin >> n;
+int x = 1, y = (n + 1) / 2;
+vector ans(n + 1, vector<int>(n + 1));
+for (int i = 1; i <= n * n; i++) {
+    ans[x][y] = i;
+    if (!ans[(x - 2 + n) % n + 1][y % n + 1]){
+        x = (x - 2 + n) % n + 1;
+        y = y % n + 1;
+    } else {
+        x = x % n + 1;
+    }
+}
+\end{lstlisting}
+
+\subsection{约瑟夫问题}
+$n$ 个人编号 $0,1,2…,n-1$ ，每次数到 $k$ 出局，求最后剩下的人的编号。
+
+$\mathcal O(N)$ 。
+\begin{lstlisting}[caption={}]
+int jos(int n,int k){
+    int res=0;
+    repeat(i,1,n+1)res=(res+k)%i;
+    return res; // res+1,如果编号从1开始
+}
+\end{lstlisting}
+$\mathcal O(K\log N)$ ，适用于 $K$ 较小的情况。
+\begin{lstlisting}[caption={}]
+int jos(int n,int k){
+    if(n==1 || k==1)return n-1;
+    if(k>n)return (jos(n-1,k)+k)%n; // 线性算法
+    int res=jos(n-n/k,k)-n%k;
+    if(res<0)res+=n; // mod n
+    else res+=res/(k-1); // 还原位置
+    return res; // res+1,如果编号从1开始
+}
+\end{lstlisting}
+
+
+\subsection{舞蹈链}
+理论复杂度大概在$O(c^n)$ 左右，其中 $c$ 为某个非常接近于 $1$的常数,$n$ 为矩阵中 $1$的个数。
+
+数独求解
+\begin{lstlisting}[caption={}]
+#include<bits/stdc++.h>
+constexpr int N = 1e6 + 10;
+int ans[10][10], stk[N];
+
+struct DLX {
+	static constexpr int MAXSIZE = 1e5 + 10;
+	int n, m, tot, first[MAXSIZE + 10], siz[MAXSIZE + 10];
+	int L[MAXSIZE + 10], R[MAXSIZE + 10], U[MAXSIZE + 10], D[MAXSIZE + 10];
+	int col[MAXSIZE + 10], row[MAXSIZE + 10];
+
+	void build(const int &r, const int &c) {  // 进行build操作
+		n = r, m = c;
+		for (int i = 0; i <= c; ++i) {
+			L[i] = i - 1, R[i] = i + 1;
+			U[i] = D[i] = i;
+		}
+		L[0] = c, R[c] = 0, tot = c;
+		memset(first, 0, sizeof(first));
+		memset(siz, 0, sizeof(siz));
+	}
+
+	void insert(const int &r, const int &c) {  // 进行insert操作
+		col[++tot] = c, row[tot] = r, ++siz[c];
+		D[tot] = D[c], U[D[c]] = tot, U[tot] = c, D[c] = tot;
+		if (!first[r]) first[r] = L[tot] = R[tot] = tot;
+		else {
+			R[tot] = R[first[r]], L[R[first[r]]] = tot;
+			L[tot] = first[r], R[first[r]] = tot;
+		}
+	}
+
+	void remove(const int &c) {  // 进行remove操作
+		int i, j;
+		L[R[c]] = L[c], R[L[c]] = R[c];
+		for (i = D[c]; i != c; i = D[i])
+		for (j = R[i]; j != i; j = R[j])
+			U[D[j]] = U[j], D[U[j]] = D[j], --siz[col[j]];
+	}
+
+	void recover(const int &c) {  // 进行recover操作
+		int i, j;
+		for (i = U[c]; i != c; i = U[i])
+		for (j = L[i]; j != i; j = L[j]) U[D[j]] = D[U[j]] = j, ++siz[col[j]];
+		L[R[c]] = R[L[c]] = c;
+	}
+
+	bool dance(int dep) {  // dance
+		int i, j, c = R[0];
+		if (!R[0]) {
+			for (i = 1; i < dep; ++i) {
+				int x = (stk[i] - 1) / 9 / 9 + 1;
+				int y = (stk[i] - 1) / 9 % 9 + 1;
+				int v = (stk[i] - 1) % 9 + 1;
+				ans[x][y] = v;
+			}
+			return true;
+		}
+		for (i = R[0]; i != 0; i = R[i])
+			if (siz[i] < siz[c]) c = i;
+		remove(c);
+		for (i = D[c]; i != c; i = D[i]) {
+			stk[dep] = row[i];
+			for (j = R[i]; j != i; j = R[j]) remove(col[j]);
+			if (dance(dep + 1)) return true;
+			for (j = L[i]; j != i; j = L[j]) recover(col[j]);
+		}
+		recover(c);
+		return false;
+	}
+} solver;
+
+int GetId(int row, int col, int num) {
+	return (row - 1) * 9 * 9 + (col - 1) * 9 + num;
+}
+
+void Insert(int row, int col, int num) {
+	int dx = (row - 1) / 3 + 1;
+	int dy = (col - 1) / 3 + 1;
+	int room = (dx - 1) * 3 + dy;
+	int id = GetId(row, col, num);
+	int f1 = (row - 1) * 9 + num;            // task 1
+	int f2 = 81 + (col - 1) * 9 + num;       // task 2
+	int f3 = 81 * 2 + (room - 1) * 9 + num;  // task 3
+	int f4 = 81 * 3 + (row - 1) * 9 + col;   // task 4
+	solver.insert(id, f1);
+	solver.insert(id, f2);
+	solver.insert(id, f3);
+	solver.insert(id, f4);
+}
+using std::cin;using std::cout;
+int main() {
+	cin.tie(nullptr)->sync_with_stdio(false);
+	solver.build(729, 324);
+	for (int i = 1; i <= 9; ++i)
+		for (int j = 1; j <= 9; ++j) {
+			cin >> ans[i][j];
+			for (int v = 1; v <= 9; ++v) {
+				if (ans[i][j] && ans[i][j] != v) continue;
+				Insert(i, j, v);
+			}
+		}
+	solver.dance(1);
+	for (int i = 1; i <= 9; ++i, cout << '\n')
+		for (int j = 1; j <= 9; ++j, cout << ' ') cout << ans[i][j];
+	return 0;
+}
+\end{lstlisting}
+
+\subsection{对拍}
+\subsubsection{Windows}
+\begin{lstlisting}[caption={}]
+int main(){
+	system("g++ -std=c++20 gen.cpp -o gen.exe");
+	system("g++ -std=c++20 brute.cpp -o brute.exe");
+	system("g++ -std=c++20 std.cpp -o std.exe");
+	for(int i = 1;i <= 1000;i++){
+		system("gen.exe > test.in");
+		system("brute.exe < test.in > brute.out");
+		system("std.exe < test.in > std.out");
+		if(system("fc std.out brute.out")){
+			cout << "Wrong Answer on test " << i << "\n";
+			system("type test.in");
+			system("type brute.out");
+			system("type std.out");
+			return 0;
+		}
+		else{
+			cout << "Accepted on test" << i << ".\n";
+		}
+	}
+	return 0;
+}
+\end{lstlisting}
+
+\subsubsection{Linux}
+\begin{lstlisting}[caption={}]
+int main(){
+    system("g++ -std=c++20 gen.cpp -o gen");
+    system("g++ -std=c++20 brute.cpp -o brute");
+    system("g++ -std=c++20 std.cpp -o std");
+    for(int i = 1; i <= 1000; i++){
+        system("./gen > test.in");
+        system("./brute < test.in > brute.out");
+        system("./std < test.in > std.out");
+        if(system("diff std.out brute.out")){
+            cout << "Wrong Answer on test " << i << "\n";
+            system("cat test.in");
+            system("cat brute.out");
+            system("cat std.out");
+            return 0;
+        }
+        else{
+            cout << "Accepted on test " << i << ".\n";
+        }
+    }
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{python高精度}
+\begin{lstlisting}[caption={}]
+t decimal
+decimal.getcontext().prec = 1000000
+n = decimal.Decimal(input())
+t = (4 + n) * (3 + n) * (2 + n) * (1 + n)
+print(t // 24)
+\end{lstlisting}
+
+
+\subsection{乱七八糟}
+看数据范围（多测总和）,变量shadow,多测清空,
+longlong,数组开小了,模数不对,MLE?,对拍记得看输出在不在变,
+输出格式,inf开小,答案初值,STL重构导致引用失效,极端情况(n=1),
+删除调试代码,循环内变量名重复\\
+
+将二维矩阵旋转90°: $b[j][n - j + 1] = a[i][j]$\\
+将二维矩阵旋转180°: $b[n - i + 1][n - j + 1] = a[i][j]$\\
+将二维矩阵旋转270°: $b[n - j + 1][i] = a[i][j]$\\

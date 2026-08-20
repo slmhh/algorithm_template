@@ -1,0 +1,331 @@
+\section{网络流}
+\subsection{dinic 算法}
+
+\begin{itemize}
+    \item 1.在一般情况下 Dinic 算法的时间复杂度是 $O(|V|^2|E|)$.
+	\item 2.在各边容量均为 1 的网络上,时间复杂度是 $O(|E| \min(|E|^\frac{1}{2},|V|^\frac{2}{3}))$.
+	\item 3.在单位网络,即满足除源汇外各点入度不超过 1 或出度不超过 1且各边容量均为 1 的网络上,
+  时间复杂度是 $O(|E| \sqrt{|V|})$.
+\end{itemize}
+\begin{lstlisting}[caption={}]
+struct dinic{
+	int n,s,t;
+    std::vector<int> head,cur,level;
+	struct edge{
+		i64 to,ne,w;
+	};
+	std::vector<edge> e;
+
+	dinic(int _n,int _s,int _t):
+    n(_n),s(_s),t(_t),
+    head(_n + 1,-1),cur(_n + 1,0),level(_n + 1,-1){}
+
+	void addEdge(int u,int v,i64 w){
+		e.push_back({v,head[u],w});
+		head[u] = e.size() - 1;	
+		e.push_back({u,head[v],0});
+		head[v] = e.size() - 1;	
+	}
+
+	bool bfs(){
+		std::queue<int> q;
+		q.push(s);
+        std::fill(level.begin(), level.end(), -1);
+		level[s] = 0;
+		while(!q.empty()){
+			int p = q.front();
+			q.pop();
+			for(int i = head[p];i != -1;i = e[i].ne){
+				i64 v = e[i].to,w = e[i].w;
+				if(w > 0 && level[v] == -1){
+					level[v] = level[p] + 1;
+					q.push(v);
+					if(v == t) return true;
+				}
+			}
+		}
+		return level[t] != -1;
+	}
+
+	i64 dfs(i64 p,i64 flow = 1e15){
+		if(p == t || flow == 0)
+			return flow;
+		i64 rest = flow;
+		for(int i = cur[p];i != -1 && rest;i = e[i].ne){
+			i64 v = e[i].to,w = e[i].w;
+			cur[p] = i;
+			if(w > 0 && level[v] == level[p] + 1){
+				i64 c = dfs(v,std::min(rest,w));
+				rest -= c;
+				e[i].w -= c;
+				e[i ^ 1].w += c;
+			}
+		}
+		if(flow - rest == 0) level[p] = -2;
+		return flow - rest;
+	}
+
+	i64 work(){
+		i64 res = 0;
+		while(bfs()){
+            cur = head;
+			res += dfs(s);
+        }
+		return res;
+	}
+};
+
+int main(){
+	std::ios::sync_with_stdio(0),std::cin.tie(0),std::cout.tie(0);
+	int n,m,s,t,u,v,w;
+	std::cin >> n >> m >> s >> t;
+	dinic f(n,s,t);
+	for(int i = 1;i <= m;i++){
+		std::cin >> u >> v >> w;
+		f.addEdge(u,v,w);
+	}
+	std::cout << f.work() << "\n";
+	return 0;
+}
+\end{lstlisting}
+
+\subsection{最小费用最大流}
+在网络 $G =(V,E)$ 上,对每条边给定一个权值 $w(u, v)$,称为费用(cost),含义是单位流量
+通过 $(u, v)$ 所花费的代价.对于 $G$ 所有可能的最大流,我们称其中总费用最小的一者为最小
+费用最大流.
+\begin{lstlisting}[caption={}]
+struct MCMF{
+    static constexpr i64 INF = 1e18;
+    int n,s,t;
+    std::vector<int> head,cur,inq,vis;
+    std::vector<i64> dist;
+
+    MCMF(int _n,int _s,int _t):
+    n(_n),s(_s),t(_t),
+    head(_n + 1,-1),cur(_n + 1),dist(_n + 1),
+    inq(_n + 1),vis(_n + 1){}
+
+    struct edge{
+        i64 to,ne,w,c;
+    };
+    std::vector<edge> e;
+
+	void add(int u,int v,i64 w, i64 c){
+        e.push_back({v,head[u],w,c});
+		head[u] = e.size() - 1;	
+	}
+
+	void addEdge(int u, int v,i64 w,i64 c){
+		add(u, v, w, c);
+		add(v, u, 0, -c);
+	}
+
+	bool SPFA(){
+		std::queue<int> q;
+        cur = head;
+        std::fill(dist.begin(),dist.end(),1e18);
+        dist[s] = 0;
+		q.push(s);
+		while (!q.empty()){
+			i64 p = q.front();
+			q.pop();
+			inq[p] = 0;
+			for (int i = head[p];i != -1;i = e[i].ne){
+				i64 v = e[i].to, w = e[i].w;
+				if (w > 0 && dist[v] > dist[p] + e[i].c){
+					dist[v] = dist[p] + e[i].c;
+					if (!inq[v]){
+						q.push(v);
+						inq[v] = 1;
+					}
+				}
+			}
+		}
+		return dist[t] < INF;
+	}
+
+	i64 dfs(int p,i64 flow = INF){
+		if(p == t || flow == 0)
+			return flow;
+        vis[p] = 1;
+		i64 rest = flow;
+		for(int i = cur[p];i != -1 && rest;i = e[i].ne){
+			i64 v = e[i].to,w = e[i].w;
+			cur[p] = i;
+			if(w > 0 && !vis[v] && dist[v] == dist[p] + e[i].c){
+				i64 c = dfs(v,std::min(rest,w));
+				rest -= c;
+				e[i].w -= c;
+				e[i ^ 1].w += c;
+			}
+		}
+        vis[p] = 0;
+		return flow - rest;
+	}
+
+	i64 maxflow,mincost;
+	void work(){
+		maxflow = mincost = 0;
+		while (SPFA()){
+			i64 flow = dfs(s);
+			maxflow += flow;
+			mincost += dist[t] * flow;
+		}
+	}
+};
+
+int main(){
+	std::ios::sync_with_stdio(0),std::cin.tie(0),std::cout.tie(0);
+	int n,m,s,t,u,v,w,c;
+	std::cin >> n >> m >> s >> t;
+	MCMF f(n,s,t);
+	for(int i = 1;i <= m;i++){
+		std::cin >> u >> v >> w >> c;
+		f.addEdge(u,v,w,c);
+	}
+	f.work();
+	std::cout << f.maxflow << " " << f.mincost << "\n";
+	return 0;
+}
+\end{lstlisting}
+
+\subsection{网络流建图技巧}
+\subsubsection{二分图最大匹配}
+\begin{itemize}
+    \item 1. 首先,在图中额外添加一个源点 $s$ 和汇点 $t$.
+    \item 2. 对于每个顶点 $u\in V_1$,添加一条从源点 $s$ 到 $u$ 的边,边的容量设为 $1$.
+    \item 3. 对于每个顶点 $v\in V_2$,添加一条从 $v$ 到汇点 $t$ 的边,边的容量设为 $1$.
+    \item 4. 对于二分图中的每一条边 $e=(u,v)$,其中 $u\in V_1$且 $v\in V_2$,添加一条从 $u$ 到 $v$ 的边,边的容量也设为$1$.
+    \item 5. 在这个流网络中,我们的目标是找到最大流,最大流量的大小即为对应于二分图中的最大匹配的边数.
+\end{itemize}
+
+\subsubsection{二分图最大权匹配}
+\begin{itemize}
+    \item 1. 首先,在图中额外添加一个源点 $s$ 和汇点 $t$.
+    \item 2. 从源点向二分图的每个左部点连一条流量为 $1$,费用为 $0$ 的边
+    \item 3. 从二分图的每个右部点向汇点连一条流量为 $1$,费用为 $0$ 的边.
+    \item 4. 接下来对于二分图中每一条连接左部点 $u$ 和右部点 $v$,边权为 $w$ 的边,则连一条从 $u$ 到 $v$,流量为 $1$,费用为 $w$的边.
+    \item 5. 另外,考虑到最大权匹配下,匹配边的数量不一定与最大匹配的匹配边数量相等,因此对于每个左部点,还需向汇点连一条流量为 $1$,费用为 $0$ 的边.
+    \item 6. 求这个网络的 最大费用最大流 即可得到答案.此时,该网络的最大流量一定为左部点的数量,而最大流量下的最大费用即对应一个最大权匹配方案.
+\end{itemize}
+
+\subsubsection{二者取其一式}
+\paragraph{问题简介}
+有 $n$ 个元素,每个元素有两种选择,分别对应不同的收益/代价
+并且当某些元素同时选择某一选项时会产生额外的收益/代价
+目标是通过给每个元素分配合适的选择,使得总收益最大(或总代价最小).
+
+\begin{itemize}
+    \item 1. 建立源点 $s$ 和汇点 $t$,分别代表两种不同的选择类别.
+    \item 2. 对于每个元素 $i$,从源点 $s$ 向该节点连一条边,容量为选择第一种选择的收益/代价.
+    \item 3. 从该节点向汇点 $t$ 连一条边,容量为选择第二种选择的收益/代价.
+    \item 4. 对于元素之间的附加条件(如同选奖励或排斥惩罚),通过在相应节点之间连边来表示,容量为对应的收益或代价值.
+    \item 5. 求最小割,总收益为所有可能收益之和减去最小割的容量.
+\end{itemize}
+
+\subsubsection{最小点覆盖}
+\paragraph{问题简介}
+要求在一个无向图中选出最少的点,
+使得每条边至少有一个端点在选出的点集中.
+在二分图中,根据König定理,最小点覆盖数=最大匹配数.
+
+\begin{itemize}
+    \item 1. 对于二分图 $G=(U,V,E)$,建立源点 $s$ 和汇点 $t$.
+    \item 2. 从源点 $s$ 向 $U$ 中每个节点连一条容量为 $1$ 的边.
+    \item 3. 从 $V$ 中每个节点向汇点 $t$ 连一条容量为 $1$ 的边.
+    \item 4. 对于每条边 $(u,v) \in E$(其中 $u \in U, v \in V$),连一条从 $u$ 到 $v$ 的边,容量为 $\infty$.
+    \item 5. 求最大流,最大流的值即为最小点覆盖的大小.
+\end{itemize}
+
+\subsubsection{最大权闭合子图}
+\paragraph{问题简介}
+在一个有向图中找到一个点集,使得该点集的所有出边都指向点集内部(即闭合性),
+并且点集的权值和最大.该问题常见于依赖关系建模.
+
+\begin{itemize}
+    \item 1. 建立源点 $s$ 和汇点 $t$.
+    \item 2. 对于每个权值 $w_i > 0$ 的点 $i$,从源点 $s$ 向该点连一条容量为 $w_i$ 的边.
+    \item 3. 对于每个权值 $w_i < 0$ 的点 $i$,从该点向汇点 $t$ 连一条容量为 $-w_i$ 的边.
+    \item 4. 对于原图中的每条有向边 $(u,v)$,连一条从 $u$ 到 $v$ 的边,容量为 $\infty$.
+    \item 5. 最大权闭合子图的权值 = 所有正权值之和 - 最小割的容量.
+\end{itemize}
+
+\subsubsection{最大点权独立集问题}
+\paragraph{问题简介}
+在一个无向图中选出权值和最大的点集,使得点集中任意两点之间没有边相连.
+在一般图中该问题是NP难的,但在二分图中有多项式解法.
+
+\begin{itemize}
+    \item 1. 建立源点 $s$ 和汇点 $t$.
+    \item 2. 将二分图 $G=(U,V,E)$ 中的 $U$ 部点与源点 $s$ 相连,容量为点权.
+    \item 3. 将 $V$ 部点与汇点 $t$ 相连,容量为点权.
+    \item 4. 对于每条边 $(u,v) \in E$,连一条从 $u$ 到 $v$ 的边,容量为 $\infty$.
+    \item 5. 最大点权独立集的权值 = 所有点权之和 - 最小割的容量.
+\end{itemize}
+
+\subsubsection{最小路径覆盖问题}
+\paragraph{问题简介}
+在一个有向无环图(DAG)中用最少的简单路径覆盖所有顶点,
+且每个顶点恰好被一条路径覆盖.路径之间不能有公共点.
+
+\begin{itemize}
+    \item 1. 将原图 $G$ 中的每个点 $i$ 拆成两个点 $i$ 和 $i'$,分别放在二分图的左右两部.
+    \item 2. 建立源点 $s$ 和汇点 $t$.
+    \item 3. 从源点 $s$ 向所有左部点连一条容量为 $1$ 的边.
+    \item 4. 从所有右部点向汇点 $t$ 连一条容量为 $1$ 的边.
+    \item 5. 对于原图中的每条边 $(u,v)$,在二分图中从左部点 $u$ 向右部点 $v'$ 连一条容量为 $1$ 的边.
+    \item 6. 最小路径覆盖数 = 原图顶点数 - 最大流的值.
+\end{itemize}
+
+\subsubsection{公平分配问题}
+\paragraph{问题简介}
+有 $m$ 个任务和 $n$ 个人员，每个人员能完成某些任务且最多完成 $a_i$ 个任务。要求分配任务使得尽可能多的任务被完成，同时满足人员的容量限制。
+
+\begin{itemize}
+    \item 1. 建立源点 $s$ 和汇点 $t$。
+    \item 2. 从源点 $s$ 向每个人员节点 $P_i$ 连一条容量为 $a_i$ 的边。
+    \item 3. 从每个任务节点 $T_j$ 向汇点 $t$ 连一条容量为 $1$ 的边。
+    \item 4. 如果人员 $P_i$ 能完成任务 $T_j$，则从 $P_i$ 向 $T_j$ 连一条容量为 $1$ 的边。
+    \item 5. 求最大流，其值即为能完成的最大任务数。
+\end{itemize}
+
+\subsubsection{餐饮问题}
+\paragraph{问题简介}
+有 $n$ 头牛、$F$ 种食物和 $D$ 种饮料，每头牛有喜欢的食物和饮料列表，但只能分配一种食物和一种饮料。每种食物和饮料数量有限，求最多能满足多少头牛。
+
+\begin{itemize}
+    \item 1. 建立源点 $s$ 和汇点 $t$。
+    \item 2. 从源点 $s$ 向每种食物节点连一条容量为食物数量的边。
+    \item 3. 从每种饮料节点向汇点 $t$ 连一条容量为饮料数量的边。
+    \item 4. 将每头牛拆分成两个节点（牛左、牛右），中间连一条容量为 $1$ 的边。
+    \item 5. 如果牛喜欢某种食物，从该食物节点向对应的牛左节点连一条容量为 $1$ 的边。
+    \item 6. 如果牛喜欢某种饮料，从对应的牛右节点向该饮料节点连一条容量为 $1$ 的边。
+    \item 7. 求最大流，其值即为能满足的牛的数量。
+\end{itemize}
+
+\subsubsection{上下界可行流问题}
+\paragraph{问题简介}
+在网络流问题中，给某些边加上流量下界限制，即流量必须在 $[l, r]$ 范围内。判断是否存在满足上下界约束的可行流。
+
+\begin{itemize}
+    \item 1. 建立附加源点 $s'$ 和附加汇点 $t'$。
+    \item 2. 对于原图中每条边 $(u,v,l,r)$：从 $u$ 向 $v$ 连容量为 $r-l$ 的边，同时记录 $u$ 的出流量下限和 $+l$，$v$ 的入流量下限和 $+l$。
+    \item 3. 从附加源点 $s'$ 向每个节点 $u$ 连边，容量为该节点的入流量下界和。
+    \item 4. 从每个节点 $u$ 向附加汇点 $t'$ 连边，容量为该节点的出流量下界和。
+    \item 5. 从原汇点 $t$ 向原源点 $s$ 连一条容量为 $\infty$ 的边。
+    \item 6. 求 $s'$ 到 $t'$ 的最大流，如果满流则存在可行流。
+\end{itemize}
+
+\subsubsection{最大密度子图问题}
+\paragraph{问题简介}
+给定无向图，求一个子图使得子图的边数与点数的比值（密度）最大。这是分数规划与网络流结合的典型问题。
+
+\begin{itemize}
+    \item 1. 采用二分答案法，假设当前判断的密度值为 $g$。
+    \item 2. 将每条边视为一个权值为 $1$ 的点，每个原图节点视为一个权值为 $-g$ 的点。
+    \item 3. 建立源点 $s$ 和汇点 $t$。
+    \item 4. 对于每条边点 $e_i$，从 $s$ 向 $e_i$ 连容量为 $1$ 的边。
+    \item 5. 对于每个原图节点 $v_j$，从 $v_j$ 向 $t$ 连容量为 $g$ 的边。
+    \item 6. 如果边 $e_i$ 关联节点 $u$ 和 $v$，则从 $e_i$ 向 $u$ 和 $v$ 连容量为 $\infty$ 的边。
+    \item 7. 如果最大权闭合子图的权值 $\geq 0$，则密度 $\geq g$，否则密度 $< g$。
+\end{itemize}
