@@ -29,7 +29,7 @@ Template/
 │ ├── Graph.tex                 # 图论（最短路、生成树、强连通、二分图等）
 │ ├── Network flow.tex          # 网络流（最大流、费用流、上下界等）
 │ ├── Number theory.tex         # 数论（素数筛、扩展欧几里得、CRT 等）
-│ └── Other.tex                 # 杂项（字符串哈希、莫队、CDQ 分治等）
+│ └── Other.tex                 # 杂项（对拍、莫队、CDQ 分治等）
 ├── figures/                # 插图资源（示意图、流程图等）
 └── preamble/               # LaTeX 导言区（宏包、样式、自定义命令）
 │ ├── packages.tex              # 导入所有必需的宏包
@@ -53,6 +53,6 @@ Template/
    xelatex main.tex
     ```
     （可能需要连续运行两次以刷新交叉引用和目录）
-    
+
 查看生成的 PDF
-编译成功后，会生成 main.pdf，即为您的新手册。
+编译成功后，会生成 main.pdf，即为您的模板。
