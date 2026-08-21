@@ -1,11 +1,15 @@
 \section{字符串}
 \subsection{字符串哈希}
+$\mathcal O(|S|)$
 \begin{lstlisting}[caption={}]
-ll pow1[N],pow2[N];
+typedef std::pair<i64,i64> PII;
+const int N = 1e6 + 10;
+
+i64 pow1[N],pow2[N];
 struct string_hash{
-    const int Base = 131,M1 = 998244353,M2 = 1e9 + 7; 
-    string str;
-    vector<ll> hash1,hash2;
+    const int Base = 499,M1 = 998244853,M2 = 989244353; 
+    std::string str;
+    std::vector<i64> hash1,hash2;
     void extend(char c,int idx){
         pow1[idx] = (pow1[idx - 1] * Base) % M1;
         hash1[idx] = (hash1[idx - 1] * Base + c) % M1;
@@ -20,8 +24,8 @@ struct string_hash{
 			pow1[i] = pow2[i] = 1;
     }
 
-    void init(string str){
-        ll n = str.size();
+    void init(std::string str){
+        i64 n = str.size();
         init(n);
         this->str = str;
         for(int i = 0;i < n;i++){
@@ -29,17 +33,47 @@ struct string_hash{
         }
     }
     string_hash(){}
-    string_hash(string str){init(str);}
+    string_hash(std::string str){init(str);}
 
-    PII getHash(ll l,ll r){ // 1_idx
-        ll t1 = (hash1[r] - 1ll * hash1[l - 1] * pow1[r - l + 1]) % M1;
+    PII getHash(i64 l,i64 r){ // 1_idx
+        i64 t1 = (hash1[r] - 1LL * hash1[l - 1] * pow1[r - l + 1]) % M1;
         t1 = (t1 + M1) % M1;
-        ll t2 = (hash2[r] - 1ll * hash2[l - 1] * pow2[r - l + 1]) % M2;
+        i64 t2 = (hash2[r] - 1LL * hash2[l - 1] * pow2[r - l + 1]) % M2;
         t2 = (t2 + M2) % M2;
         return {t1,t2};
     }
+
+    bool same(i64 l1,i64 r1,i64 l2,i64 r2){
+        PII ta = getHash(l1,r1);
+        PII tb = getHash(l2,r2);
+        return ta.first == tb.first && ta.second == tb.second;
+    }
 };
 \end{lstlisting}
+
+\subsection{最小表示法}
+最小表示法是一种用于解决字符串最小表示问题的方法。它的核心思想是找到一个字符串的所有循环同构字符串中字典序最小的那个字符串,$\mathcal O(|S|)$。
+\begin{lstlisting}[caption={}]
+template<typename T>
+int get_min_str(const T& str){  //返回循环同构字符串的最小字典序首位下标
+    int i = 0,j = 1,k = 0;
+    int n = str.size();
+    while(i < n && j < n && k < n){
+        int tmp = str[(i + k) % n] - str[(j + k) % n];
+        if(tmp == 0){
+            k++;
+        }
+        else{
+            if(tmp > 0) i += k + 1;
+            else j += k + 1;
+            if(i == j) j++;
+            k = 0;
+        }
+    }
+    return std::min(i,j);
+}
+\end{lstlisting}
+
 
 \subsection{KMP}
 在字符串中查找子串,以最坏 $\mathcal O(N+M)$ 的时间计算 $t$ 在 $s$ 中出现的全部位置。
@@ -47,14 +81,11 @@ struct string_hash{
 最小周期：字符串长度-整个字符串的 $border$;
 
 最小循环节：区别于周期，当字符串长度 $n \bmod (n - nxt[n]) = 0$ 时，等于最小周期，否则为 $n$ 。
-
-
 \begin{lstlisting}[caption={}]
-typedef long long ll;
-ll ne[N],m,n;
-string a,b;
-vector<ll> ans;
-void getnext(string str){ //求next数组 
+i64 ne[N],m,n;
+std::string a,b;
+std::vector<i64> ans;
+void getnext(std::string& str){
 	ne[0] = 0;
 	for(int i = 1,j = 0;i < str.size();i++){
 		while(j && str[i] != str[j]) j = ne[j - 1];
@@ -62,7 +93,8 @@ void getnext(string str){ //求next数组
 		ne[i] = j;
 	}
 }
-void kmp(string a,string b){
+
+void kmp(std::string& a,std::string& b){
 	getnext(b);
 	for(int i = 0,j = 0;i < a.size();i++){
 		while(j && a[i] != b[j]) j = ne[j - 1];
@@ -76,86 +108,111 @@ void kmp(string a,string b){
 获取字符串 $s$ 和 $s[i,n-1]$ (即以 $s[i]$ 开头的后缀)
 的最长公共前缀(LCP)的长度,总复杂度 $\mathcal O(N)$。
 \begin{lstlisting}[caption={}]
-vector<int> zFunction(string s) {
-    int n = s.size();
-    vector<int> z(n);
-    z[0] = n;
-    for (int i = 1, j = 1; i < n; i++) {
-        z[i] = max(0, min(j + z[j] - i, z[i - j]));
-        while (i + z[i] < n && s[z[i]] == s[i + z[i]]) {
+template<typename T>
+std::vector<int> z_function(const T& str){
+    int n = str.size();
+    std::vector<int> z(n);
+    int j = 0;
+    for(int i = 1;i < n;i++){
+        z[i] = (j + z[j] <= i) ? 0 : std::min(j + z[j] - i,z[i - j]);
+        while(i + z[i] < n && str[z[i]] == str[i + z[i]]){
             z[i]++;
         }
-        if (i + z[i] > j + z[j]) {
+        if(j + z[j] < i + z[i]){
             j = i;
         }
     }
+    z[0] = n;
     return z;
 }
 \end{lstlisting}
 
 \subsection{Manacher}
+$\mathcal O(|S|)$
 \begin{lstlisting}[caption={}]
-//奇偶归一化处理
-string change(string str){
-    string temp = "!#";
-    for(int i = 0;i < str.size();i++){
-        temp += str[i];
-        temp += '#';
+struct Manacher{
+    std::vector<int> p;
+    std::string change(std::string& str){
+        std::string temp = "!#";
+        for(int i = 0;i < str.size();i++){
+            temp += str[i];
+            temp += '#';
+        }
+        return temp;
     }
-    return temp;
-}
 
-int Manacher(string str){
-    if(str.size() == 0 || str.size() == 1)
-        return str.size();
-    int maxright = 0,mid = 0,ans = 0;
-    str = change(str);
-    vector<int> p(str.size());
-    for(int i = 1;i < str.size();i++){
-        //对称
-        if(i < maxright) p[i] = min(p[2 * mid - i],maxright - i + 1);
-        else p[i] = 1 + (str[i] != '#');
-        //扩展
-        while(i - p[i] >= 0 && p[i] + i < str.size() && str[i - p[i]] == str[i + p[i]]){
-            p[i]++;
+    void get_p(std::string& str){
+        int maxright = 0,mid = 0;
+        str = change(str);
+        p.assign(str.size(),0);
+        for(int i = 1;i < str.size();i++){
+            if(i < maxright){
+                p[i] = std::min(p[2 * mid - i],maxright - i + 1);
+            }
+            else{
+                p[i] = 1 + (str[i] != '#');
+            }
+            while(i - p[i] >= 0 && p[i] + i < str.size() && str[i - p[i]] == str[i + p[i]]){
+                p[i]++;
+            }
+            if(i + p[i] - 1 > maxright){
+                mid = i;
+                maxright = i + p[i] - 1;
+            }
         }
-        //变更最右回文子串
-        if(i + p[i] - 1 > maxright){
-            mid = i;
-            maxright = i + p[i] - 1;
-        }
-        ans = max(ans,p[i] - 1);
     }
-    return ans;
-}
+    // 返回最大回文串长度
+    int get_max(std::string& str){
+        get_p(str);
+        int res = 0;
+        for(int i = 1;i < p.size();i++){
+            res = std::max(res,p[i] - 1);
+        }
+        return res;
+    }
+};
 \end{lstlisting}
 
 
 \subsection{字典树}
+$\mathcal O(N \log N)$
 \begin{lstlisting}[caption={}]
-struct trie {
-  int nex[100000][26], cnt;
-  bool exist[100000];  // 该结点结尾的字符串是否存在
+template<int N = 26>
+struct Trie{
+    std::vector<std::array<int,N>> son;
+    std::vector<int> cnt;
 
-  void insert(char *s, int l) {  // 插入字符串
-    int p = 0;
-    for (int i = 0; i < l; i++) {
-      int c = s[i] - 'a';
-      if (!nex[p][c]) nex[p][c] = ++cnt;  // 如果没有，就添加结点
-      p = nex[p][c];
+    Trie(){
+        son.push_back(std::array<int,N>{});
+        cnt.push_back(0);
     }
-    exist[p] = 1;
-  }
 
-  bool find(char *s, int l) {  // 查找字符串
-    int p = 0;
-    for (int i = 0; i < l; i++) {
-      int c = s[i] - 'a';
-      if (!nex[p][c]) return 0;
-      p = nex[p][c];
+    void insert(std::string& str){  //插入 
+        int p = 0,n = str.size();
+        for(int i = 0;i < n;i++){
+            int ch = str[i] - '0';
+            if(!son[p][ch]){ //如果此处字母不存在就创建一个
+                son[p][ch] = son.size();  
+                son.push_back(std::array<int,N>{});
+                cnt.push_back(0);
+            }
+            p = son[p][ch];  //指向下一个位置 
+            // cnt[p]++;
+        }
+        cnt[p]++;  //该处单词数+1 
     }
-    return exist[p];
-  }
+
+    int find(std::string& str){  //找 
+        int p = 0,n = str.size();
+        for(int i = 0;i < n;i++){
+            int ch = str[i] - '0';
+            if(!son[p][ch]){
+                return 0;
+            }
+            p = son[p][ch];
+        }
+        return cnt[p];
+    }
 };
 \end{lstlisting}
 

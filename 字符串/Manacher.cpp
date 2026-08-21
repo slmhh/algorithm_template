@@ -1,49 +1,57 @@
 #include<bits/stdc++.h>
-#define all(x) (x).begin(),(x).end()
-using namespace std;
 
-typedef long long ll;
-typedef pair<ll,ll> PII;
-const int N = 5e6 + 10;
-
-//ÆæÅ¼¹éÒ»»¯´¦Àí
-string change(string str){
-    string temp = "!#";
-    for(int i = 0;i < str.size();i++){
-        temp += str[i];
-        temp += '#';
-    }
-    return temp;
-}
-
-int Manacher(string str){
-    if(str.size() == 0 || str.size() == 1)
-        return str.size();
-    int maxright = 0,mid = 0,ans = 0;
-    str = change(str);
-    vector<int> p(str.size());
-    for(int i = 1;i < str.size();i++){
-        //¶Ô³Æ
-        if(i < maxright) p[i] = min(p[2 * mid - i],maxright - i + 1);
-        else p[i] = 1 + (str[i] != '#');
-        //À©Õ¹
-        while(i - p[i] >= 0 && p[i] + i < str.size() && str[i - p[i]] == str[i + p[i]]){
-            p[i]++;
+// https://www.luogu.com.cn/problem/P3805 ã€æ¨¡æ¿ã€‘Manacher
+struct Manacher{
+    std::vector<int> p;
+    //å¥‡å¶å½’ä¸€åŒ–å¤„ç†
+    std::string change(std::string& str){
+        std::string temp = "!#";
+        for(int i = 0;i < str.size();i++){
+            temp += str[i];
+            temp += '#';
         }
-        //±ä¸ü×îÓÒ»ØÎÄ×Ó´®
-        if(i + p[i] - 1 > maxright){
-            mid = i;
-            maxright = i + p[i] - 1;
-        }
-        ans = max(ans,p[i] - 1);
+        return temp;
     }
-    return ans;
-}
+
+    void get_p(std::string& str){
+        int maxright = 0,mid = 0;
+        str = change(str);
+        p.assign(str.size(),0);
+        for(int i = 1;i < str.size();i++){
+            //å¯¹ç§°
+            if(i < maxright){
+                p[i] = std::min(p[2 * mid - i],maxright - i + 1);
+            }
+            else{
+                p[i] = 1 + (str[i] != '#');
+            }
+            //æ‰©å±•
+            while(i - p[i] >= 0 && p[i] + i < str.size() && str[i - p[i]] == str[i + p[i]]){
+                p[i]++;
+            }
+            //å˜æ›´æœ€å³å›æ–‡å­ä¸²
+            if(i + p[i] - 1 > maxright){
+                mid = i;
+                maxright = i + p[i] - 1;
+            }
+        }
+    }
+    // è¿”å›æœ€å¤§å›æ–‡ä¸²é•¿åº¦
+    int get_max(std::string& str){
+        get_p(str);
+        int res = 0;
+        for(int i = 1;i < p.size();i++){
+            res = std::max(res,p[i] - 1);
+        }
+        return res;
+    }
+};
 
 int main() {
-    ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
-    string str;
-    cin >> str;
-    cout << Manacher(str) << "\n";
+    std::cin.tie(0)->sync_with_stdio(0);
+    std::string str;
+    std::cin >> str;
+    Manacher manacher;
+    std::cout << manacher.get_max(str) << "\n";
     return 0;
 }

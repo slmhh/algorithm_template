@@ -5,7 +5,7 @@ const int N = 1e6 + 10;
 
 i64 pow1[N],pow2[N];
 struct string_hash{
-    const int Base = 499,M1 = 998244353,M2 = 1e9 + 7; 
+    const int Base = 499,M1 = 998244853,M2 = 989244353;  
     std::string str;
     std::vector<i64> hash1,hash2;
     void extend(char c,int idx){
