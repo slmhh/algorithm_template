@@ -366,3 +366,160 @@ struct PalindromeAutomaton {
     }
 };
 \end{lstlisting}
+
+
+\subsection{后缀自动机 (SAM)}
+字符串 $S$ 的 SAM 是一个接受 $S$ 的所有后缀的最小 DFA.
+
+对于一个长度为 $N$ 的字符串，它的空间复杂度仅为 $\mathcal O(N)$．而且，构造 SAM 的时间复杂度也仅为 $\mathcal O(N)$.
+准确地说，一个 SAM 最多有 $2N - 1$ 个结点和 $3N - 4$ 条转移边．最终得到的是一个 DAG.
+
+所有状态和所有后缀链接构成根为 $t_0$ 的根向树，这个树也称为 后缀链接树.
+
+后缀链接树有如下性质：
+
+\begin{itemize}
+    \item 祖先节点对应的字符串总是子孙节点对应的字符串的后缀．
+    \item 每个节点处的 $\operatorname{endpos}$ 集合就是它的子树内的所有「前缀节点」$v_i$ 的下标 $i$ 的集合．
+    \item 后缀链接树的祖先节点的 $\operatorname{endpos}$ 集合总是严格包含子孙节点的 $\operatorname{endpos}$ 集合．
+    \item  每个节点处的 $\operatorname{len}$ 的值就是它的子树内的所有「前缀节点」$v_i$ 对应前缀的最长公共后缀的长度．
+    \item 除根节点 $t_0$ 外，每个节点对应的不同子串的数目，就是它的 $\operatorname{len}$ 值，减去它的父节点的 $\operatorname{len}$ 值，即 $\operatorname{len}(v)-\operatorname{len}(\operatorname{link}(v))$.
+\end{itemize}
+
+\begin{lstlisting}[caption={}]
+template<int N = 26>
+struct SAM{
+    struct State{
+        int fa;                 // 后缀链接 (suffix link)
+        int len;                // 该状态代表的最长子串长度
+        std::array<int,N> next; // 转移边
+        State(): fa(0), len(0) {next.fill(0);}
+    };
+    
+    std::vector<State> st;
+    std::vector<int> occ;  // 出现次数
+    int last = 1;
+
+    SAM(){
+        init();
+    }
+    SAM(std::string& str){
+        init();
+        for(auto ch : str){
+            extend(ch);
+        }
+    }
+
+    void init(){
+        st.resize(2);
+        occ.assign(2,0);
+        st[0].len = -1;
+        st[1].len = st[1].fa = 0;
+    }
+
+    void extend(char ch){
+        int c = ch - 'a';
+        int cur = st.size(),p = last;
+        st.push_back(State());
+        occ.push_back(1);
+        st[cur].len = st[last].len + 1;
+
+        while(p && !st[p].next[c]){
+            st[p].next[c] = cur;
+            p = st[p].fa;
+        }
+        
+        if(!p){
+            st[cur].fa = 1;
+        }
+        else{
+            int q = st[p].next[c];
+            if(st[p].len + 1 == st[q].len){
+                st[cur].fa = q;
+            }
+            else{
+                int clone = st.size();
+                st.push_back(st[q]);
+                occ.push_back(0);
+                st[clone].len = st[p].len + 1;
+                while(p && st[p].next[c] == q){
+                    st[p].next[c] = clone;
+                    p = st[p].fa;
+                }
+                st[q].fa = st[cur].fa = clone;
+            }
+        }
+        last = cur;
+    }
+};
+\end{lstlisting}
+
+\subsubsection{后缀自动机应用}
+
+\begin{itemize}
+    \item \textbf{检查字符串是否出现}
+    \begin{enumerate}
+        \item \textbf{问题：} 给定文本串 $T$ 和模式串 $P$，判断 $P$ 是否为 $T$ 的子串。
+        \item \textbf{解法：} 构造 $T$ 的 SAM。从初始状态 $t_0$ 开始，按 $P$ 的字符转移。若中途失配则 $P$ 未出现；若能完整转移则出现。单次查询 $O(|P|)$，且可求得 $P$ 在 $T$ 中的最长匹配前缀。
+    \end{enumerate}
+
+    \item \textbf{计算不同子串个数}
+    \begin{enumerate}
+        \item \textbf{问题：} 给定字符串 $S$，求其不同子串的总数。
+        \item \textbf{解法：} 构造 $S$ 的 SAM。每个状态 $v$（不含 $t_0$）贡献 $\operatorname{len}(v)-\operatorname{len}(\operatorname{link}(v))$，累加所有状态即为答案。复杂度 $O(|S|)$。
+    \end{enumerate}
+
+    \item \textbf{所有不同子串的总长度}
+    \begin{enumerate}
+        \item \textbf{问题：} 给定字符串 $S$，求所有不同子串的长度之和。
+        \item \textbf{解法：} 状态 $v$ 贡献 $\dfrac{\operatorname{len}(v)(\operatorname{len}(v)+1)}{2} - \dfrac{\operatorname{len}(\operatorname{link}(v))(\operatorname{len}(\operatorname{link}(v))+1)}{2}$，累加即得总长度。复杂度 $O(|S|)$。
+    \end{enumerate}
+
+    \item \textbf{字典序第 $k$ 大子串}
+    \begin{enumerate}
+        \item \textbf{问题：} 给定字符串 $S$，多组询问，每次查询 $S$ 的所有子串中字典序第 $k$ 大的子串。
+        \item \textbf{解法：} 在 SAM 上统计从每个状态出发的路径总数，然后从根开始按字典序贪心查找。预处理 $O(|S|)$，单次查询 $O(|\text{ans}|\cdot|\Sigma|)$。
+    \end{enumerate}
+
+    \item \textbf{最小循环移位}
+    \begin{enumerate}
+        \item \textbf{问题：} 给定字符串 $S$，求其字典序最小的循环移位。
+        \item \textbf{解法：} 构造 $S+S$ 的 SAM，从根出发贪心走字典序最小的边，直到路径长度为 $|S|$。复杂度 $O(|S|)$。
+    \end{enumerate}
+
+    \item \textbf{出现次数（多模式串查询）}
+    \begin{enumerate}
+        \item \textbf{问题：} 给定文本串 $T$，多组询问，每次给模式串 $P$，求 $P$ 在 $T$ 中出现的次数。
+        \item \textbf{解法：} 构造 $T$ 的 SAM。在 SAM 上，每个非克隆状态初始 $occ=1$，克隆状态 $occ=0$。将状态按 $\operatorname{len}$ 降序排序，将 $occ$ 累加到后缀链接指向的父节点。最终 $occ[v]$ 即状态 $v$ 代表的子串出现次数。查询时找到 $P$ 对应状态，输出其 $occ$。预处理 $O(|T|)$，单次查询 $O(|P|)$。
+    \end{enumerate}
+
+    \item \textbf{第一次出现的位置}
+    \begin{enumerate}
+        \item \textbf{问题：} 给定文本串 $T$，多组查询，每次给模式串 $P$，求 $P$ 在 $T$ 中第一次出现的起始位置。
+        \item \textbf{解法：} 构造 $T$ 的 SAM。每个非克隆状态 $v_i$（对应前缀 $T[1..i]$）初始值为 $i$，克隆状态为 $\infty$。按 $\operatorname{len}$ 降序排序，将每个状态的初始值取 $\min$ 传递给后缀链接父节点。最终 $first[v]$ 为状态 $v$ 代表子串的结束位置最小值。查询时找到 $P$ 对应状态 $v$，答案 $first[v] - |P| + 1$。预处理 $O(|T|)$，单次查询 $O(|P|)$。
+    \end{enumerate}
+
+    \item \textbf{所有出现的位置}
+    \begin{enumerate}
+        \item \textbf{问题：} 给定文本串 $T$，多组查询，每次给模式串 $P$，输出 $P$ 在 $T$ 中的所有出现起始位置。
+        \item \textbf{解法：} 找到 $P$ 对应状态 $v$，在后缀链接树中遍历 $v$ 的子树，输出所有非克隆状态对应的前缀位置（减去 $|P|+1$）。单次查询复杂度 $O(|P| + \text{answer}(P))$。
+    \end{enumerate}
+
+    \item \textbf{最短的未出现字符串}
+    \begin{enumerate}
+        \item \textbf{问题：} 给定字符串 $S$ 和字符集，求最短的未在 $S$ 中出现的字符串。
+        \item \textbf{解法：} 在 $S$ 的 SAM 上 DP。设 $d_v$ 为从状态 $v$ 出发需添加的最小字符数。若 $v$ 无任何转移，则 $d_v=1$；否则 $d_v=1+\min_{c} d_{\text{next}(v,c)}$。答案 $d_{t_0}$，并可回溯构造。复杂度 $O(|S|\cdot|\Sigma|)$。
+    \end{enumerate}
+
+    \item \textbf{两个字符串的最长公共子串}
+    \begin{enumerate}
+        \item \textbf{问题：} 给定字符串 $S$ 和 $T$，求它们的最长公共子串。
+        \item \textbf{解法：} 构造 $S$ 的 SAM。遍历 $T$，维护当前匹配状态 $v$ 和长度 $l$：若存在 $c$ 转移则转移并 $l+1$；否则沿后缀链接回退，直到有转移或回到根。更新答案 $ans=\max(ans,l)$。复杂度 $O(|T|)$。
+    \end{enumerate}
+
+    \item \textbf{多个字符串的最长公共子串}
+    \begin{enumerate}
+        \item \textbf{问题：} 给定 $k$ 个字符串 $S_1,\dots,S_k$，求它们的最长公共子串。
+        \item \textbf{解法：} 构造新串 $T=S_1\#_1 S_2\#_2 \cdots S_k\#_k$，其中 $\#_i$ 为互不相同的分隔符。构造 $T$ 的 SAM，对每个状态记录它能通过哪些分隔符（即它能到达哪些原始字符串）。通过 DP 或 DFS 计算每个状态的可达分隔符集合，若可达全部 $k$ 个，则该状态对应的最长子串长度为 $\operatorname{len}(v)$。取最大值。复杂度 $O(|T| + k\cdot |\Sigma|)$。
+    \end{enumerate}
+\end{itemize}

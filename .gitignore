@@ -5,3 +5,6 @@
 *.out
 *.gz
 *.toc
+*.fls
+*.xdv
+*.fdb_latexmk
